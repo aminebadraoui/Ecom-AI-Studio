@@ -10,6 +10,53 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
+// Helper function to generate unique product name
+async function generateUniqueName(baseName: string, userId: string): Promise<string> {
+    const trimmedName = baseName.trim()
+
+    // Check if the base name exists
+    const { data: existingProducts } = await supabaseAdmin
+        .from('products')
+        .select('name')
+        .eq('user_id', userId)
+        .ilike('name', `${trimmedName}%`)
+
+    if (!existingProducts || existingProducts.length === 0) {
+        return trimmedName
+    }
+
+    // Check if exact name exists
+    const exactMatch = existingProducts.find(p => p.name.toLowerCase() === trimmedName.toLowerCase())
+    if (!exactMatch) {
+        return trimmedName
+    }
+
+    // Find the highest number suffix
+    let highestNumber = 1
+    const namePattern = new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}( \\d+)?$`, 'i')
+
+    existingProducts.forEach(product => {
+        const match = product.name.match(namePattern)
+        if (match) {
+            const number = match[1] ? parseInt(match[1].trim()) : 1
+            highestNumber = Math.max(highestNumber, number)
+        }
+    })
+
+    return `${trimmedName} ${highestNumber + 1}`
+}
+
+// Helper function to generate tag from name
+function generateTag(name: string): string {
+    return name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+        .trim()
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-') // Replace multiple hyphens with single
+        .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+}
+
 export async function POST(request: NextRequest) {
     try {
         // Authenticate the user using the same pattern as /api/auth/me
@@ -42,6 +89,8 @@ export async function POST(request: NextRequest) {
 
         const formData = await request.formData()
         const file = formData.get('file') as File
+        const productName = formData.get('productName') as string
+        const physicalDimensionsString = formData.get('physicalDimensions') as string
 
         if (!file) {
             return NextResponse.json(
@@ -49,6 +98,27 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             )
         }
+
+        if (!productName || !productName.trim()) {
+            return NextResponse.json(
+                { error: 'Product name is required' },
+                { status: 400 }
+            )
+        }
+
+        // Parse physical dimensions
+        let physicalDimensions = null
+        if (physicalDimensionsString) {
+            try {
+                physicalDimensions = JSON.parse(physicalDimensionsString)
+            } catch (error) {
+                console.error('Failed to parse physical dimensions:', error)
+            }
+        }
+
+        // Generate unique name and tag
+        const uniqueName = await generateUniqueName(productName, user.id)
+        const tag = generateTag(uniqueName)
 
         // Validate file type
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -106,13 +176,15 @@ export async function POST(request: NextRequest) {
             .from('products')
             .insert({
                 user_id: user.id,
-                name: file.name.split('.')[0], // Use filename without extension as name
+                name: uniqueName,
+                tag: tag,
                 image_url: cloudinaryResult.secure_url,
                 dimensions: {
                     width: cloudinaryResult.width,
                     height: cloudinaryResult.height,
                     unit: 'px'
                 },
+                physical_dimensions: physicalDimensions,
                 metadata: {
                     cloudinary_public_id: cloudinaryResult.public_id,
                     file_format: cloudinaryResult.format,

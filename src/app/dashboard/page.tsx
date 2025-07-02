@@ -105,13 +105,13 @@ export default function Dashboard() {
                                 Ready to create stunning product photos? You have {user?.credits || 0} credits available.
                             </p>
                             <Link
-                                href="/upload"
+                                href="/products"
                                 className="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200"
                             >
                                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
-                                Start New Project
+                                Manage Products
                             </Link>
                         </div>
                         <div className="hidden lg:block">
@@ -142,10 +142,10 @@ export default function Dashboard() {
                                         {stat.value}
                                     </p>
                                     <p className={`text-sm ${stat.changeType === 'positive'
-                                            ? 'text-green-600'
-                                            : stat.changeType === 'negative'
-                                                ? 'text-red-600'
-                                                : 'text-gray-500'
+                                        ? 'text-green-600'
+                                        : stat.changeType === 'negative'
+                                            ? 'text-red-600'
+                                            : 'text-gray-500'
                                         }`}>
                                         {stat.change}
                                     </p>
@@ -206,13 +206,13 @@ export default function Dashboard() {
                                 No recent activity
                             </h4>
                             <p className="text-gray-500 dark:text-gray-400 mb-4">
-                                Start by uploading your first product photo to see your activity here.
+                                Start by creating your first product to see your activity here.
                             </p>
                             <Link
-                                href="/upload"
+                                href="/products"
                                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
                             >
-                                Upload Photos
+                                Create Product
                             </Link>
                         </div>
                     </div>
