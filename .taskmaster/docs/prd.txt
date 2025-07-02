@@ -1,0 +1,276 @@
+# Product Requirements Document: AI-Powered Ecommerce Photo Studio
+
+## Project Overview
+
+### Product Name
+EcomPhotoStudio - AI-Powered Product Photography Platform
+
+### Vision Statement
+Create an AI-driven platform that enables ecommerce companies to generate professional product photoshoots by uploading product images and customizing scenes with or without human models.
+
+### Target Users
+- Ecommerce business owners
+- Marketing teams
+- Product managers
+- Small to medium businesses needing product photography
+
+## Core Features & Requirements
+
+### 1. User Management & Authentication
+- User registration and login system using Supabase Auth
+- Email verification and password reset functionality
+- User profile management with subscription details
+- Credit balance tracking and display
+
+### 2. Product Management System
+- **Product Upload Flow:**
+  - Drag and drop image upload interface
+  - Product dimension input (width, height, depth with units)
+  - Product name and category selection
+  - Image validation and optimization
+  - Storage in Supabase Storage
+
+- **AI Product Analysis:**
+  - Automatic product description generation using AI
+  - Product categorization based on image analysis
+  - Metadata extraction and storage
+  - Product library management for users
+
+### 3. Model Management System
+- **Model Creation Options:**
+  - Upload existing model photos
+  - AI-generated models based on characteristics
+  
+- **Model Characteristics System:**
+  - Gender selection (male/female/non-binary)
+  - Age range specification
+  - Physical attributes (hair color, eye color, height, body type)
+  - Ethnicity selection
+  - Style preferences
+
+- **Model Library:**
+  - User's saved models management
+  - Model preview and editing capabilities
+  - Model usage history and analytics
+
+### 4. Photoshoot Creation Engine
+- **Style Selection:**
+  - Professional photoshoot style
+  - UGC (User Generated Content) style
+  - Style preview examples
+
+- **Scene Configuration:**
+  - Model inclusion toggle (with model/product-only)
+  - Model selection from user's library
+  - Scene description input options
+
+- **AI Scene Suggestions:**
+  - Context-aware scene recommendations
+  - Based on product type, style, and model selection
+  - Multiple concept variations
+  - User customization of suggested scenes
+
+### 5. AI Photo Generation System
+- **Generation Parameters:**
+  - High-quality output resolution
+  - Multiple photo variations per concept
+  - Consistent lighting and styling
+  - Product placement optimization
+
+- **Processing Pipeline:**
+  - Queue management for generation requests
+  - Real-time progress tracking
+  - Error handling and retry mechanisms
+  - Generation history and settings storage
+
+### 6. Gallery & Asset Management
+- **Photo Gallery:**
+  - Generated photos display and organization
+  - High-resolution download options
+  - Photo sharing capabilities
+  - Batch download functionality
+
+- **Asset Organization:**
+  - Project-based photo grouping
+  - Search and filter functionality
+  - Tagging and categorization
+  - Archive and delete options
+
+### 7. Credit & Payment System
+- **Credit Packages:**
+  - Starter: 10 credits - $9.99
+  - Professional: 50 credits - $39.99
+  - Enterprise: 200 credits - $149.99
+
+- **Credit Usage Model:**
+  - Product upload + AI description: 1 credit
+  - AI model generation: 2 credits
+  - Professional photoshoot: 5 credits
+  - UGC photoshoot: 3 credits
+  - Additional variants: 2 credits
+
+- **Stripe Integration:**
+  - Secure payment processing
+  - Subscription management
+  - Invoice generation
+  - Payment history tracking
+
+### 8. Dashboard & Analytics
+- **User Dashboard:**
+  - Credit balance and usage
+  - Recent photoshoots overview
+  - Quick action buttons
+  - Usage analytics and insights
+
+- **Analytics Features:**
+  - Monthly usage reports
+  - Popular scene types
+  - Credit spending analysis
+  - Performance metrics
+
+## Technical Requirements
+
+### Technology Stack
+- **Frontend:** Next.js 15 with App Router, TypeScript, Tailwind CSS
+- **Backend:** Next.js API routes, Supabase PostgreSQL
+- **Authentication:** Supabase Auth
+- **File Storage:** Supabase Storage
+- **Payments:** Stripe
+- **AI Services:** OpenAI API, Replicate, or Stability AI
+- **Image Processing:** Sharp.js or similar
+
+### Database Schema
+- Users table with credit tracking
+- Products table with AI descriptions
+- Models table with characteristics
+- Photoshoots table with generation settings
+- Generated photos table
+- Credit transactions table
+
+### Performance Requirements
+- Image upload: < 30 seconds
+- AI description generation: < 10 seconds
+- Photo generation: < 2 minutes
+- Page load times: < 3 seconds
+- 99.9% uptime requirement
+
+### Security Requirements
+- HTTPS encryption for all data transfer
+- Secure file upload validation
+- User data privacy compliance
+- Payment data security (PCI compliance via Stripe)
+- Image content moderation
+
+## User Experience Requirements
+
+### Onboarding Flow
+1. User registration with email verification
+2. Welcome tutorial showing key features
+3. Free trial credits (5 credits)
+4. Guided first product upload
+5. Sample photoshoot generation
+
+### Key User Journeys
+1. **New Product Photoshoot:**
+   - Upload product → AI analysis → Choose style → Select/create model → Generate scenes → Create photos
+
+2. **Model Creation:**
+   - Access model library → Create new → Upload photo OR specify characteristics → Save model
+
+3. **Credit Purchase:**
+   - Check credit balance → Select package → Stripe checkout → Confirmation
+
+### Mobile Responsiveness
+- Fully responsive design for all screen sizes
+- Touch-optimized interfaces
+- Progressive Web App capabilities
+- Offline functionality for viewing generated content
+
+## Success Metrics
+
+### Key Performance Indicators
+- User acquisition rate
+- Credit conversion rate
+- Average credits per user per month
+- Photo generation success rate
+- User retention (30-day, 90-day)
+- Customer satisfaction score
+
+### Business Metrics
+- Monthly Recurring Revenue (MRR)
+- Customer Acquisition Cost (CAC)
+- Lifetime Value (LTV)
+- Churn rate
+- Support ticket volume
+
+## Development Phases
+
+### Phase 1: Foundation (Weeks 1-2)
+- Project setup and core architecture
+- Authentication system implementation
+- Basic UI components and design system
+- Supabase integration and database setup
+
+### Phase 2: Product Management (Weeks 3-4)
+- Product upload functionality
+- AI description generation
+- Product library and management
+- File storage and optimization
+
+### Phase 3: Model System (Weeks 5-6)
+- Model creation workflows
+- AI model generation
+- Model library management
+- Characteristics input system
+
+### Phase 4: Photoshoot Engine (Weeks 7-8)
+- Photoshoot creation flow
+- AI scene suggestion system
+- Photo generation integration
+- Queue and progress management
+
+### Phase 5: Payment Integration (Weeks 9-10)
+- Stripe payment system
+- Credit management
+- Transaction tracking
+- Billing and invoicing
+
+### Phase 6: Gallery & Polish (Weeks 11-12)
+- Photo gallery and download features
+- Analytics dashboard
+- Performance optimization
+- Testing and bug fixes
+
+## Constraints & Assumptions
+
+### Technical Constraints
+- AI generation API rate limits
+- File storage size limitations
+- Processing power requirements for image generation
+- Third-party service dependencies
+
+### Business Constraints
+- Initial budget for AI service costs
+- Scalability requirements for user growth
+- Compliance with image rights and usage
+- Content moderation requirements
+
+### Assumptions
+- Users have basic technical literacy
+- Stable internet connection for uploads
+- Credit-based model preferred over subscriptions
+- Professional quality output is primary value proposition
+
+## Risk Mitigation
+
+### Technical Risks
+- AI service downtime → Multiple provider fallbacks
+- High generation costs → Usage optimization and monitoring
+- Poor generation quality → Quality control and retry mechanisms
+
+### Business Risks
+- Low user adoption → Comprehensive onboarding and free trials
+- High customer acquisition costs → Referral programs and organic growth
+- Competition → Unique features and superior user experience
+
+This PRD serves as the foundation for building a comprehensive AI-powered ecommerce photo studio platform that addresses the core needs of online businesses requiring high-quality product photography. 

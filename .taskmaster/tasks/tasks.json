@@ -1,0 +1,346 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Setup Project Repository and Environment",
+        "description": "Initialize the Next.js project with TypeScript and Tailwind CSS, and set up the basic project repository structure.",
+        "details": "Use Next.js 15 with App Router. Initialize a new project using 'npx create-next-app@latest --typescript'. Configure Tailwind CSS (v3.x) and ensure proper linting and formatting with ESLint and Prettier. Set up a Git repository for version control.",
+        "testStrategy": "Verify repository structure, ensure the project builds and runs on localhost, and check Tailwind CSS is applied to sample pages.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Integrate Supabase for Auth and Database",
+        "description": "Set up Supabase integration for authentication, PostgreSQL database, and storage.",
+        "details": "Create a Supabase project and configure Supabase Auth for user registration/login. Set up your PostgreSQL database with tables for users, products, models, photoshoots, generated photos, and credit transactions. Use the Supabase JS client (latest version) in the Next.js project. In addition, configure Supabase Storage for file uploads.",
+        "testStrategy": "Test connection to Supabase, verify that authentication endpoints work, and run sample queries against the database.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Implement User Registration & Login",
+        "description": "Develop user registration and login screens using Supabase Auth.",
+        "details": "Build registration and login pages in Next.js using Supabase Auth API. Implement client-side validation. Include support for email verification. Use Next.js API routes for any server-side operations if needed.",
+        "testStrategy": "Register a new user, check for email verification process and login functionality. Validate error messages for invalid credentials.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Implement Email Verification and Password Reset",
+        "description": "Add functionality for email verification and allow users to reset their password.",
+        "details": "Leverage Supabase's built-in email verification processes. Customize email templates if possible and implement password reset flows using Supabase Auth. Code should include API endpoints for initiating and executing a password reset.",
+        "testStrategy": "Simulate email registration and verify receipt of verification email, perform password reset flow and check updated login credentials.",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "User Profile Management with Credit Tracking",
+        "description": "Implement user profile pages where users can view and update their profile details including subscription information and credit balance.",
+        "details": "Build a profile dashboard in Next.js that fetches user data from Supabase. Integrate credit balance tracking and display. Use Supabase database queries to fetch subscription details and credit transactions.",
+        "testStrategy": "Test profile updates, simulate credit balance changes, and verify correct display of user and subscription information.",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Develop Drag and Drop Image Upload Component",
+        "description": "Create a UI component for drag and drop image uploads for product images.",
+        "details": "Use a library like react-dropzone (v14.x) to implement the drag and drop functionality. Integrate client-side validations to check file type and size. Provide a preview of the uploaded image before submission.",
+        "testStrategy": "Manually test by dragging and dropping images, validate that file type restrictions are in place, and confirm image preview functionality.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement Server-side Image Validation and Optimization",
+        "description": "Validate and optimize uploaded images using Sharp.js before storing in Supabase Storage.",
+        "details": "Use Sharp (v0.30.x) in a Next.js API route to compress, resize, and validate images. Ensure that images adhere to required dimensions and formats. Upload optimized image to Supabase Storage.",
+        "testStrategy": "Upload various image sizes and formats, confirm that the image is optimized and stored successfully in Supabase Storage, and measure processing time (< 30 seconds).",
+        "priority": "high",
+        "dependencies": [
+          6,
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Develop Product Upload Form with Metadata Inputs",
+        "description": "Create a product upload form that includes fields for dimensions, product name, category, and ties into the image upload flow.",
+        "details": "Develop a Next.js form component with inputs for width, height, depth (with units), product name, and category selection. Integrate this form with the drag and drop component and call the API endpoint that handles image optimization and storage.",
+        "testStrategy": "Perform form submissions with valid and invalid data, validate form field constraints, and check that metadata is correctly recorded in the database.",
+        "priority": "high",
+        "dependencies": [
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Integrate AI for Product Description Generation and Categorization",
+        "description": "Implement AI-based analysis for automatically generating product descriptions and categorizing products based on uploaded images.",
+        "details": "Utilize OpenAI's API (latest version) to generate descriptions. Use image metadata and possibly a pre-trained model for categorization. Integrate these calls into the product upload flow. Ensure that request rate limits are managed and fallbacks are in place.",
+        "testStrategy": "Use test images to check that descriptions and categories are generated within 10 seconds. Validate API responses and error handling.",
+        "priority": "high",
+        "dependencies": [
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Store Product Data in Supabase Database",
+        "description": "Save product information including AI-generated descriptions and metadata into the Supabase PostgreSQL database.",
+        "details": "Create API endpoints using Next.js API routes to insert product records into the 'products' table. Ensure proper relations with user accounts and include metadata fields for dimensions and descriptions.",
+        "testStrategy": "Insert sample product records via the API, then query the database to confirm data integrity and completeness.",
+        "priority": "medium",
+        "dependencies": [
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Develop Model Management Interface",
+        "description": "Create an interface for users to upload existing model photos and manage model details.",
+        "details": "Build UI components for model upload using react-dropzone and forms for specifying characteristics (gender, age, physical attributes, ethnicity, style). Store details in the 'models' table. Use Supabase Storage for model photos.",
+        "testStrategy": "Simulate model uploads and check that all attributes are captured, and confirm data is correctly stored and retrievable from the database.",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Implement AI Model Generation Functionality",
+        "description": "Provide functionality for generating AI-based model photos based on specified characteristics.",
+        "details": "Integrate with AI generation APIs such as Stability AI or Replicate. Build an API route in Next.js that accepts model characteristics and returns generated images. Manage API rate limits and offer fallback mechanisms.",
+        "testStrategy": "Test generation requests with various input attributes. Verify outputs for quality and performance criteria.",
+        "priority": "medium",
+        "dependencies": [
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Build Model Library Management Interface",
+        "description": "Implement a library for users to view, edit, and manage their saved models.",
+        "details": "Develop UI components listing models with preview images, edit options, and usage history. Tie this with the backend by creating API routes to retrieve and update model records in the 'models' table.",
+        "testStrategy": "Manually verify listing, editing, and removing models. Ensure API connectivity and data consistency.",
+        "priority": "medium",
+        "dependencies": [
+          11,
+          12
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Develop Photoshoot Creation Flow - Style Selection",
+        "description": "Create the initial step in the photoshoot creation process where users select the photoshoot style (professional or UGC).",
+        "details": "Build a Next.js page that displays different style options with examples. Use state management to record the selected style and allow navigation to subsequent steps.",
+        "testStrategy": "Manual UI testing to ensure style selection is responsive, state is correctly managed, and navigation works as expected.",
+        "priority": "medium",
+        "dependencies": [
+          5,
+          10
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Implement Scene Configuration Interface",
+        "description": "Develop the scene configuration page enabling model selection, scene description, and model toggle options.",
+        "details": "Create form fields for toggling model usage, selecting a model from the user’s library, and entering scene descriptions. Integrate with previous selections (style, product info).",
+        "testStrategy": "Ensure UI accepts and saves user input properly. Verify that the toggle and selection components work and data is passed to the backend.",
+        "priority": "medium",
+        "dependencies": [
+          14
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Integrate AI Scene Suggestions API",
+        "description": "Implement context-aware scene recommendation using AI based on product type, style, and model selection.",
+        "details": "Leverage OpenAI API to generate scene suggestions. Create a Next.js API route that receives product, style, and model parameters, and returns multiple scene concepts. Implement caching to handle rate limits.",
+        "testStrategy": "Trigger the API endpoint with dummy parameters and verify that multiple scene suggestions are returned with proper formatting and content.",
+        "priority": "medium",
+        "dependencies": [
+          15
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Implement AI Photo Generation Pipeline",
+        "description": "Build a backend process that handles photo generation using specified parameters ensuring high-quality output.",
+        "details": "Develop a Next.js API route to enqueue photo generation requests, using a queue (e.g., BullMQ) if needed. Integrate with AI services (Replicate, Stability AI) to produce images with resolution and consistency. Include error handling, retry mechanisms, and logging.",
+        "testStrategy": "Request photo generation with test data, monitor queue behavior, and verify generated image quality and processing time (<2 minutes).",
+        "priority": "high",
+        "dependencies": [
+          16
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Store Photo Generation History and Settings",
+        "description": "Record photo generation requests and outcomes in the database for auditing and user history.",
+        "details": "Create a 'photoshoots' table and a 'generated_photos' table in the Supabase PostgreSQL database. Save generation parameters, status, and generated image URLs. Implement corresponding API routes.",
+        "testStrategy": "Test generation requests and query the database to assume history storage. Verify that records match the generation settings input.",
+        "priority": "medium",
+        "dependencies": [
+          17
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Develop Photo Gallery and Asset Management UI",
+        "description": "Implement a responsive gallery interface where users can view, organize, and download generated photos.",
+        "details": "Build Next.js pages to display generated photos with options for high-resolution download, batch download, and sharing. Include features like filtering by tags or projects. Use Supabase queries to pull relevant images.",
+        "testStrategy": "Manually validate gallery operations: viewing, searching, filtering, and downloading files. Test responsiveness across devices.",
+        "priority": "medium",
+        "dependencies": [
+          18
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Integrate Stripe for Payment and Credit Packages",
+        "description": "Implement payment processing using Stripe to handle credit package purchases and subscriptions.",
+        "details": "Set up Stripe integration (using Stripe's Node.js SDK, latest version). Create APIs to handle checkout sessions, subscription management, and webhooks for payment events. Secure the API endpoints accordingly.",
+        "testStrategy": "Simulate purchase flows in Stripe test mode and verify that credit packages (Starter, Professional, Enterprise) are processed correctly. Validate webhook event handling.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Implement Credit Consumption Logic",
+        "description": "Develop the logic that deducts credits based on actions (product upload, AI generation, photoshoot types).",
+        "details": "Within API endpoints and backend functions, incorporate logic to deduct credits as defined: 1 credit for product uploads, 2 for AI model generation, 5 for professional photoshoots, etc. Update user credit balance in the Supabase DB and record transactions in a credit transactions table.",
+        "testStrategy": "Simulate various actions and verify that credit deductions occur and are reflected in the user profile and transactions log.",
+        "priority": "medium",
+        "dependencies": [
+          10,
+          20
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Build User Dashboard with Analytics Overview",
+        "description": "Develop a dashboard for users to view their credit balances, recent photoshoots, and usage analytics.",
+        "details": "Create interactive dashboard components in Next.js that pull data from various endpoints (credit balance from users table, photoshoot history, usage metrics). Use chart libraries such as Chart.js or Recharts for visual analytics.",
+        "testStrategy": "Perform manual tests to confirm that data is accurately fetched and displayed. Validate responsiveness and performance across devices.",
+        "priority": "medium",
+        "dependencies": [
+          5,
+          21
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "Implement Advanced Analytics and Reporting",
+        "description": "Develop backend and frontend functionality to provide monthly usage reports, popular scene metrics, and performance insights.",
+        "details": "Calculate KPIs like monthly usage, credit spending, and scene popularity. Create API endpoints to aggregate data from transactions and photo generation tables, and display the analytics in the dashboard using interactive graphs.",
+        "testStrategy": "Populate test data and verify aggregated metrics, ensuring that reports accurately reflect input data. Test report generation speed and UI clarity.",
+        "priority": "low",
+        "dependencies": [
+          22
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 24,
+        "title": "Enhance Mobile Responsiveness and PWA Features",
+        "description": "Ensure that the application is fully responsive and includes Progressive Web App (PWA) capabilities with offline content viewing.",
+        "details": "Adopt responsive design best practices with Tailwind CSS breakpoints. Implement service workers using Workbox or Next.js PWA plugin to enable offline access for viewing generated content. Test across various devices and browsers.",
+        "testStrategy": "Run viewport resizing tests and PWA audits (using Lighthouse) to verify performance, offline capabilities, and responsiveness.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 25,
+        "title": "Perform Final Testing, Optimization, and Security Audit",
+        "description": "Conduct end-to-end testing, performance optimizations, and security reviews to ensure compliance with requirements and industry best practices.",
+        "details": "Run full integration tests including user flows (registration, upload, generation, payment) using automated testing frameworks like Jest and Cypress. Optimize API response times, bundle sizes, and perform a security audit (HTTPS enforcement, file validation, PCI compliance for Stripe).",
+        "testStrategy": "Automate tests using Jest/Cypress, conduct load testing, and perform security scans. Validate performance metrics against requirements (e.g., page load < 3 seconds).",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          8,
+          17,
+          20
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-02T02:25:42.975Z",
+      "updated": "2025-07-02T02:41:13.976Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
