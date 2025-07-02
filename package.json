@@ -10,12 +10,15 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.2",
+    "@types/react-dropzone": "^4.2.2",
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
     "jsonwebtoken": "^9.0.2",
     "next": "15.3.4",
     "nodemailer": "^7.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-dropzone": "^14.3.8",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

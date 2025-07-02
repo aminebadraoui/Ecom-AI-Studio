@@ -29,26 +29,49 @@ NEXT_PUBLIC_SUPABASE_URL=your_project_url_here
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 
-# OpenAI Configuration (for AI features)
+# JWT Secret for Custom Authentication
+JWT_SECRET=your_jwt_secret_here_min_32_chars
+
+# Cloudinary Configuration (Image CDN)
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+
+# OpenAI Configuration (for AI features - optional)
 OPENAI_API_KEY=your_openai_api_key
 
-# Stripe Configuration (for payments - add later)
+# Stripe Configuration (for payments - optional)
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 ```
+
+### 3.1. Setup Cloudinary (Image CDN)
+1. Go to [cloudinary.com](https://cloudinary.com) and create a free account
+2. Once logged in, go to your **Dashboard**
+3. Copy the following values:
+   - **Cloud Name** → `CLOUDINARY_CLOUD_NAME`
+   - **API Key** → `CLOUDINARY_API_KEY` 
+   - **API Secret** → `CLOUDINARY_API_SECRET`
+4. Your free account includes:
+   - 25GB storage
+   - 25GB monthly bandwidth
+   - Automatic image optimization
+   - CDN delivery
+   - Perfect for development and small projects
 
 ### 4. Run Database Migration
 1. Go to **SQL Editor** in your Supabase dashboard
 2. Copy the contents of `supabase/migrations/001_initial_schema.sql`
 3. Paste and run the SQL to create all tables and functions
 
-### 5. Configure Storage (for image uploads)
+### 5. Configure Storage (optional - for non-image files)
+Cloudinary handles all product images, but if you need to store other files:
 1. Go to **Storage** in Supabase dashboard
-2. Create a new bucket named `product-images`
-3. Make it **public** for read access
-4. Create another bucket named `generated-photos` (also public)
-5. Create bucket named `model-photos` (also public)
+2. Create a new bucket named `documents` (for PDFs, etc.)
+3. Create bucket named `exports` (for generated content)
+
+> **Note**: Product images are handled by Cloudinary CDN for better performance and optimization. Supabase Storage is only needed for non-image files like documents or exports.
 
 ### 6. Test the Connection
 1. Start your development server: `npm run dev`
