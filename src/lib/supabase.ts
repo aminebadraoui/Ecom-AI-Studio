@@ -15,16 +15,4 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
         persistSession: true,
         detectSessionInUrl: true
     }
-})
-
-// Server-side client with service role key (for admin operations)
-export const supabaseAdmin = createClient<Database>(
-    supabaseUrl,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
-    }
-) 
+}) 
