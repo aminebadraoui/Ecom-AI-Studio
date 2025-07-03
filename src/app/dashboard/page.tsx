@@ -9,16 +9,28 @@ export default function Dashboard() {
 
     const quickActions = [
         {
-            name: 'Upload Photos',
-            description: 'Start a new photo editing session',
-            href: '/upload',
+            name: 'Manage Products',
+            description: 'Create and manage your products',
+            href: '/products',
             icon: (
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
             ),
             color: 'from-blue-500 to-blue-600',
             textColor: 'text-blue-600'
+        },
+        {
+            name: 'Model Faces',
+            description: 'Manage your model face collection',
+            href: '/models',
+            icon: (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            ),
+            color: 'from-purple-500 to-purple-600',
+            textColor: 'text-purple-600'
         },
         {
             name: 'Browse Projects',
@@ -29,8 +41,8 @@ export default function Dashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
             ),
-            color: 'from-purple-500 to-purple-600',
-            textColor: 'text-purple-600'
+            color: 'from-indigo-500 to-indigo-600',
+            textColor: 'text-indigo-600'
         },
         {
             name: 'Buy Credits',

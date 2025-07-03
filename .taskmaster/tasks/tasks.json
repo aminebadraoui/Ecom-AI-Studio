@@ -438,11 +438,117 @@
             "testStrategy": "Write unit and integration tests for routing actions, breadcrumb updates, and navigation state consistency. Utilize automated UI tests to simulate navigation flows."
           }
         ]
+      },
+      {
+        "id": 27,
+        "title": "Develop Close-Up Models Management System",
+        "description": "Create a complete management system dedicated to handling close-up model faces, featuring unique naming, tagging, editing, and both manual and AI-generated image input.",
+        "details": "Design and implement a new models management system similar to the products system but focused on close-up model faces. This involves creating or adapting the database schema to handle model records without physical dimensions, building API endpoints for CRUD operations, and developing frontend pages to view, create, edit, and replace model images. The system should support both traditional image uploads (leveraging established drag-and-drop components) and AI-generated images via Imagen-4 through the Replicate API. Integrate this feature with existing Supabase authentication and storage, ensuring smooth data flow and consistency with other parts of the application.",
+        "testStrategy": "Verify that the API endpoints correctly handle creation, retrieval, update, and deletion of model records by checking changes in the database. Manually test the frontend interfaces for creating new models, editing details, uploading images, and triggering AI image generation, including handling API failures gracefully. Additionally, run integration tests to ensure compatibility with Supabase authentication and storage services, and validate that unique names and tags are enforced.",
+        "status": "done",
+        "dependencies": [
+          11,
+          13
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design Database Schema and Create Migration",
+            "description": "Define and implement the database schema for close-up model records, ensuring fields like unique naming, tagging, and image references are handled without physical dimensions. Create migration scripts for deploying these changes.",
+            "dependencies": [],
+            "details": "Review the existing products system schema for guidance. Adapt fields for close-up models by excluding dimension data and including unique attributes. Write migration scripts (e.g. using your ORM or SQL migration tool) that can be version controlled and reviewed.",
+            "status": "done",
+            "testStrategy": "Run migration in a staging environment and verify the schema using sample data inserts and queries."
+          },
+          {
+            "id": 2,
+            "title": "Develop CRUD API Endpoints",
+            "description": "Build API endpoints to perform Create, Read, Update, and Delete operations on close-up model records.",
+            "dependencies": [
+              1
+            ],
+            "details": "Utilize your backend framework to set up RESTful (or GraphQL if applicable) endpoints that interact with the schema created in task 1. Ensure that endpoints properly validate inputs and handle exceptions. Implement endpoint documentation for developer reference.",
+            "status": "done",
+            "testStrategy": "Use API testing tools (Postman or similar) to verify each endpoint's behavior and error handling."
+          },
+          {
+            "id": 3,
+            "title": "Create Frontend Listing and Viewing Page",
+            "description": "Develop a frontend page to list and view details of close-up model records, pulling data from the CRUD API built in task 2.",
+            "dependencies": [
+              2
+            ],
+            "details": "Design the user interface with a focus on clear presentation of model information. Connect the page to the API endpoint for fetching models and apply pagination and search/filter features if needed.",
+            "status": "done",
+            "testStrategy": "Conduct UI testing to ensure that data is correctly retrieved and displayed, and that the page responds well to different screen sizes and data volumes."
+          },
+          {
+            "id": 4,
+            "title": "Implement Frontend Creation and Upload Page",
+            "description": "Develop a frontend page for creating new model records, including form-based input for unique naming, tagging, and an image upload interface supporting drag-and-drop functionality.",
+            "dependencies": [
+              2
+            ],
+            "details": "Build a form that includes fields for text input and integrates an image uploader. Reuse established drag-and-drop components and integrate client-side validations. Ensure the form communicates with the Create endpoint from task 2.",
+            "status": "done",
+            "testStrategy": "Perform form validation tests, file upload tests, and verify that successful submissions are reflected in the API responses and database."
+          },
+          {
+            "id": 5,
+            "title": "Develop Frontend Edit and Replace Functionality",
+            "description": "Create a frontend interface to allow users to edit model details and replace existing images, supporting both manual replacement and AI-generated images.",
+            "dependencies": [
+              2,
+              4
+            ],
+            "details": "Build an edit page that pre-populates model data and provides options to update tags, names, and images. Ensure the page integrates with the Update API endpoint. Design the UI to allow toggling between manual uploads and AI-generated image inputs.",
+            "status": "done",
+            "testStrategy": "Verify update operations by checking database records before/after edits and test the image replace functionality on multiple browser sessions."
+          },
+          {
+            "id": 6,
+            "title": "Integrate AI Image Generation with Replicate's Imagen-4 API",
+            "description": "Develop the functionality that integrates Replicate's Imagen-4 API for generating model images, and link this feature with the model management system.",
+            "dependencies": [
+              2,
+              4
+            ],
+            "details": "Create a service or helper function that calls the Replicate API with necessary parameters. Integrate this service into the image upload/edit pages so users can choose to generate images. Ensure API keys and configurations are securely handled.",
+            "status": "done",
+            "testStrategy": "Test the AI image generation by simulating API calls in a sandbox environment and verifying that generated images are correctly received, stored, and associated with the model record."
+          },
+          {
+            "id": 7,
+            "title": "Enhance Image Upload Handling with Drag-and-Drop Component",
+            "description": "Upgrade the existing image handling component to support both traditional and AI-generated images, ensuring smooth drag-and-drop functionality.",
+            "dependencies": [
+              4,
+              6
+            ],
+            "details": "Modify the drag-and-drop component to account for additional functionalities like previewing AI-generated images versus manual uploads. Ensure that the component validates file types, sizes, and handles error scenarios effectively.",
+            "status": "done",
+            "testStrategy": "Test the uploader by simulating various file upload scenarios including manual and AI-generated images, and check for error handling and UI responsiveness."
+          },
+          {
+            "id": 8,
+            "title": "Update Navigation and Perform End-to-End Testing",
+            "description": "Integrate the close-up models management system into the existing application navigation and perform comprehensive end-to-end tests to ensure system consistency and smooth user experience.",
+            "dependencies": [
+              3,
+              5,
+              7
+            ],
+            "details": "Add relevant navigation links or menu items that lead to the new management pages. Update the application routing as needed. Conduct full system testing, including integration tests of authentication, storage, API endpoints, and UI flows.",
+            "status": "done",
+            "testStrategy": "Perform manual user testing complemented by automated end-to-end tests (using tools like Cypress or Selenium) to verify that all workflows function correctly and securely."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-07-02T02:25:42.975Z",
-      "updated": "2025-07-02T04:31:38.827Z",
+      "updated": "2025-07-03T03:44:18.047Z",
       "description": "Tasks for master context"
     }
   }
