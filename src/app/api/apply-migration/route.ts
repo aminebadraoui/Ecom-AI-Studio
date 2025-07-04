@@ -28,7 +28,7 @@ export async function POST() {
         if (createTableError) {
             console.error('Error creating users table:', createTableError)
             // Try direct SQL execution
-            const { error } = await supabaseAdmin
+            await supabaseAdmin
                 .from('_temp')
                 .select('*')
                 .limit(0) // This will fail but let us test the connection

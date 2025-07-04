@@ -5,7 +5,7 @@ export async function GET() {
     try {
         // Test basic connection by trying to access the profiles table
         // If tables don't exist, we'll get a different error that we can handle
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
             .limit(1)

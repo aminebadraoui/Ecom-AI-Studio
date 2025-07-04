@@ -62,7 +62,7 @@ export function verifyToken(token: string): { userId: string } | null {
         const secret = getJwtSecret()
         const decoded = jwt.verify(token, secret) as { userId: string }
         return decoded
-    } catch (error) {
+    } catch {
         return null
     }
 }
@@ -159,7 +159,7 @@ export async function signIn({ email, password }: SignInData): Promise<AuthResul
         const token = generateToken(user.id)
 
         // Remove password_hash from response
-        const { password_hash, ...userWithoutPassword } = user
+        const { password_hash: _, ...userWithoutPassword } = user
 
         return {
             user: userWithoutPassword,

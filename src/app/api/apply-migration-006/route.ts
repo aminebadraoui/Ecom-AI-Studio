@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function GET() {
@@ -6,7 +6,7 @@ export async function GET() {
         console.log('🔧 Checking migration 006: Models table...')
 
         // Try to query the models table to see if it exists
-        const { data: tableCheck, error: tableError } = await supabaseAdmin
+        const { error: tableError } = await supabaseAdmin
             .from('models')
             .select('count(*)')
             .limit(1)

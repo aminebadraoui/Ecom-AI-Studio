@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 interface SidebarProps {
     isCollapsed: boolean
     onToggle: () => void
+    isMobile?: boolean
 }
 
 interface NavigationItem {
@@ -18,12 +19,23 @@ interface NavigationItem {
     description?: string
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, isMobile = false }) => {
     const pathname = usePathname()
     const { user } = useAuth()
 
     // Navigation sections with organized structure
     const mainNavigation: NavigationItem[] = [
+        {
+            name: 'Dashboard',
+            href: '/dashboard',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5v4M16 5v4" />
+                </svg>
+            ),
+            description: 'Overview and analytics'
+        },
         {
             name: 'Photoshoots',
             href: '/photoshoots',
@@ -96,39 +108,39 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
             <Link
                 href={item.href}
                 className={`
-          group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out
-          ${active
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
+                    relative group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out
+                    ${active
+                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 shadow-sm'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
                     }
-          ${isCollapsed ? 'justify-center px-2' : ''}
-        `}
+                    ${isCollapsed ? 'justify-center px-2' : ''}
+                `}
                 title={isCollapsed ? item.name : undefined}
             >
-                <div className={`flex-shrink-0 ${active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 group-hover:text-gray-600 dark:text-gray-400 dark:group-hover:text-gray-300'}`}>
+                {/* Active indicator */}
+                {active && (
+                    <div className="absolute left-0 w-1 h-6 bg-blue-600 rounded-r-full" />
+                )}
+
+                <div className={`flex-shrink-0 ${active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-300'}`}>
                     {item.icon}
                 </div>
 
                 {!isCollapsed && (
                     <>
-                        <span className="ml-3 flex-1">{item.name}</span>
+                        <span className="ml-3 flex-1 font-medium">{item.name}</span>
                         {item.badge && (
                             <span className={`
-                ml-3 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                ${active
-                                    ? 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200'
-                                    : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                ml-3 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold
+                                ${active
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-800/50 dark:text-blue-200'
+                                    : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                                 }
-              `}>
+                            `}>
                                 {item.badge}
                             </span>
                         )}
                     </>
-                )}
-
-                {/* Active indicator */}
-                {active && (
-                    <div className="absolute left-0 w-1 h-8 bg-blue-600 rounded-r-lg" />
                 )}
             </Link>
         )
@@ -138,8 +150,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
         if (isCollapsed) return null
 
         return (
-            <div className="px-3 mb-2">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+            <div className="px-3 mb-3">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider dark:text-slate-400">
                     {title}
                 </h3>
             </div>
@@ -149,36 +161,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
     return (
         <>
             {/* Mobile backdrop */}
-            {!isCollapsed && (
+            {isMobile && !isCollapsed && (
                 <div
-                    className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity lg:hidden z-20"
+                    className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity z-20"
                     onClick={onToggle}
                 />
             )}
 
             {/* Sidebar */}
             <div className={`
-        fixed inset-y-0 left-0 z-30 flex flex-col bg-white dark:bg-gray-900 shadow-xl transition-all duration-300 ease-in-out
-        lg:static lg:translate-x-0
-        ${isCollapsed
-                    ? 'w-16 translate-x-0'
-                    : 'w-72 translate-x-0'
-                }
-        ${!isCollapsed ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-
+                flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-r border-slate-200/60 dark:border-slate-700/60 transition-all duration-300 ease-in-out
+                ${isCollapsed ? 'w-16' : 'w-64'}
+                lg:relative lg:translate-x-0
+                ${isMobile ? 'fixed inset-y-0 left-0 z-30' : ''}
+                ${isMobile && !isCollapsed ? 'translate-x-0' : isMobile ? '-translate-x-full' : ''}
+            `}>
                 {/* Header */}
-                <div className={`flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700 ${isCollapsed ? 'px-2' : ''}`}>
+                <div className={`flex items-center justify-between p-4 border-b border-slate-200/60 dark:border-slate-700/60 ${isCollapsed ? 'px-2' : ''}`}>
                     {!isCollapsed && (
-                        <div className="flex items-center">
-                            <div className="flex-shrink-0">
-                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                    <span className="text-white font-bold text-sm">PS</span>
-                                </div>
+                        <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 gradient-accent rounded-xl flex items-center justify-center shadow-sm">
+                                <span className="text-white font-bold text-lg">PS</span>
                             </div>
-                            <div className="ml-3">
-                                <h1 className="text-xl font-bold text-gray-900 dark:text-white">PhotoStudio</h1>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">AI Photo Editor</p>
+                            <div>
+                                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">PhotoStudio</h1>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">AI Photo Editor</p>
                             </div>
                         </div>
                     )}
@@ -187,11 +194,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                     <button
                         onClick={onToggle}
                         className={`
-              p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 
-              dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-800 
-              transition-colors duration-200
-              ${isCollapsed ? 'mx-auto' : ''}
-            `}
+                            p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 
+                            dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-800 
+                            transition-all duration-200
+                            ${isCollapsed ? 'mx-auto' : ''}
+                        `}
                         aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,50 +212,45 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-4 py-6 space-y-6 overflow-y-auto">
-                    {/* Main Navigation */}
-                    <div className="space-y-1">
+                <nav className="flex-1 px-4 py-6 space-y-8 overflow-y-auto">
+                    {/* Main navigation */}
+                    <div>
                         <SectionHeader title="Main" />
-                        {mainNavigation.map((item) => (
-                            <div key={item.name} className="relative">
-                                <NavLink item={item} />
-                            </div>
-                        ))}
+                        <div className="space-y-1">
+                            {mainNavigation.map((item) => (
+                                <NavLink key={item.name} item={item} />
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Account Navigation */}
-                    <div className="space-y-1">
+                    {/* Account navigation */}
+                    <div>
                         <SectionHeader title="Account" />
-                        {accountNavigation.map((item) => (
-                            <div key={item.name} className="relative">
-                                <NavLink item={item} />
-                            </div>
-                        ))}
+                        <div className="space-y-1">
+                            {accountNavigation.map((item) => (
+                                <NavLink key={item.name} item={item} />
+                            ))}
+                        </div>
                     </div>
                 </nav>
 
-                {/* User Profile Section */}
-                {user && (
-                    <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-                        <div className={`flex items-center ${isCollapsed ? 'justify-center' : ''}`}>
-                            <div className="flex-shrink-0">
-                                <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                                    <span className="text-white text-sm font-medium">
-                                        {user.full_name ? user.full_name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-                                    </span>
-                                </div>
+                {/* User profile section */}
+                {!isCollapsed && user && (
+                    <div className="p-4 border-t border-slate-200/60 dark:border-slate-700/60">
+                        <div className="flex items-center space-x-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                            <div className="w-8 h-8 gradient-accent rounded-full flex items-center justify-center shadow-sm">
+                                <span className="text-white text-xs font-semibold">
+                                    {user.full_name ? user.full_name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                                </span>
                             </div>
-
-                            {!isCollapsed && (
-                                <div className="ml-3 min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                        {user.full_name || 'User'}
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                        {user.email}
-                                    </p>
-                                </div>
-                            )}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                                    {user.full_name || 'User'}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                    {user.email}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}

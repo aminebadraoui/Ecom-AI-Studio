@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { useDropzone } from 'react-dropzone'
+import { useDropzone, FileRejection } from 'react-dropzone'
 import Image from 'next/image'
 
 export interface UploadedFile {
@@ -33,14 +33,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     const [isUploading, setIsUploading] = useState(false)
     const [errors, setErrors] = useState<string[]>([])
 
-    const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
         setErrors([])
 
         // Handle rejected files
         if (rejectedFiles.length > 0) {
             const newErrors: string[] = []
             rejectedFiles.forEach((rejection) => {
-                rejection.errors.forEach((error: any) => {
+                rejection.errors.forEach((error) => {
                     if (error.code === 'file-too-large') {
                         newErrors.push(`File ${rejection.file.name} is too large. Maximum size is ${maxSize / (1024 * 1024)}MB`)
                     } else if (error.code === 'file-invalid-type') {

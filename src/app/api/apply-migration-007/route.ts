@@ -12,7 +12,7 @@ export async function GET() {
         const migrationSQL = readFileSync(migrationPath, 'utf8')
 
         // Test if models table is working properly (check if characteristics column exists)
-        const { data: testData, error: testError } = await supabaseAdmin
+        const { error: testError } = await supabaseAdmin
             .from('models')
             .select('id, name, tag, image_url, dimensions, metadata')
             .limit(1)
@@ -66,7 +66,7 @@ export async function GET() {
                     .eq('name', 'test-model-for-schema-check')
             }
 
-        } catch (err) {
+        } catch {
             // Expected for invalid user_id, but we're testing for characteristics constraint
         }
 

@@ -402,18 +402,6 @@ export default function PhotoshootDetailPage({ params }: PhotoshootDetailPagePro
                                 )}
                             </div>
                         </div>
-
-                        {/* Scene Description */}
-                        {photoshoot.scene_description && (
-                            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                    Scene Description
-                                </h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                                    {photoshoot.scene_description}
-                                </p>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>

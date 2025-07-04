@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken, getUserById } from '@/lib/custom-auth'
-import { supabaseAdmin } from '@/lib/supabase-admin'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({

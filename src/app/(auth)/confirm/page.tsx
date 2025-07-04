@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
-export default function ConfirmPage() {
+function ConfirmContent() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
@@ -21,7 +21,7 @@ export default function ConfirmPage() {
                 if (token_hash && type) {
                     const { error } = await supabase.auth.verifyOtp({
                         token_hash,
-                        type: type as any,
+                        type: type as 'signup' | 'recovery' | 'email_change',
                     })
 
                     if (error) {
@@ -36,7 +36,7 @@ export default function ConfirmPage() {
                 } else {
                     setError('Invalid confirmation link')
                 }
-            } catch (error) {
+            } catch {
                 setError('An unexpected error occurred')
             } finally {
                 setLoading(false)
@@ -82,7 +82,7 @@ export default function ConfirmPage() {
                                 Email Confirmed!
                             </h2>
                             <p className="text-gray-600 mb-6">
-                                Your email has been successfully confirmed. You'll be redirected to your dashboard shortly.
+                                Your email has been successfully confirmed. You&apos;ll be redirected to your dashboard shortly.
                             </p>
                             <p className="text-sm text-gray-500 mb-4">
                                 You now have 5 free credits to get started!
@@ -136,5 +136,20 @@ export default function ConfirmPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function ConfirmPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="max-w-md w-full text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading...</p>
+                </div>
+            </div>
+        }>
+            <ConfirmContent />
+        </Suspense>
     )
 } 

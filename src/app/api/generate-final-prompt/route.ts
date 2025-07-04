@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
 import { verify } from 'jsonwebtoken'
 import OpenAI from 'openai'
 
@@ -16,21 +15,21 @@ async function getAuthenticatedUser(request: NextRequest) {
     }
 
     try {
-        const decoded = verify(token, JWT_SECRET) as any
+        const decoded = verify(token, JWT_SECRET) as { userId: string; email: string }
         return { id: decoded.userId, email: decoded.email }
-    } catch (error) {
+    } catch {
         return null
     }
 }
 
 // Helper function to create size comparison references
-function generateSizeReference(dimensions: any) {
+function generateSizeReference(dimensions: { width?: string; length?: string; depth?: string; unit?: string } | null) {
     if (!dimensions) return ''
 
     const { width, length, depth, unit = 'cm' } = dimensions
-    const w = parseFloat(width)
-    const l = parseFloat(length)
-    const d = parseFloat(depth)
+    const w = parseFloat(width || '0')
+    const l = parseFloat(length || '0')
+    const d = parseFloat(depth || '0')
 
     // Convert to cm for comparison
     let wCm = w, lCm = l, dCm = d

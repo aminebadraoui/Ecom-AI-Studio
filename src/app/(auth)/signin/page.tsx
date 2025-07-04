@@ -28,7 +28,7 @@ export default function SignIn() {
                 // Redirect to dashboard on successful signin
                 router.push('/dashboard')
             }
-        } catch (err) {
+        } catch {
             setError('An unexpected error occurred')
         } finally {
             setLoading(false)
@@ -106,7 +106,7 @@ export default function SignIn() {
 
                     <div className="text-center space-y-2">
                         <p className="text-sm text-gray-600">
-                            Don't have an account?{' '}
+                            Don&apos;t have an account?{' '}
                             <Link
                                 href="/signup"
                                 className="font-medium text-indigo-600 hover:text-indigo-500"
