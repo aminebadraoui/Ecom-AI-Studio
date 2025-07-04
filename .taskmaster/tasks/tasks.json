@@ -544,11 +544,167 @@
             "testStrategy": "Perform manual user testing complemented by automated end-to-end tests (using tools like Cypress or Selenium) to verify that all workflows function correctly and securely."
           }
         ]
+      },
+      {
+        "id": 28,
+        "title": "Develop Comprehensive Photoshoot System with AI Integration",
+        "description": "Implement an end-to-end photoshoot creation system that integrates AI-powered product analysis, idea generation, and Runway ML generation while replacing the Dashboard/Projects sidebar item with Photoshoots as the primary feature.",
+        "details": "This task involves creating a multi-step photoshoot creation process. The workflow begins with product selection (leveraging the product upload and metadata infrastructure from Task 8), followed by type selection where the user can choose to proceed with or without a model. If a model is to be used, integrate model selection using interfaces from Tasks 11 and 13. Next, implement a style selection step (building off the initial work in Task 14) offering options for professional or UGC styles. After these selections, develop components for AI-powered product analysis and idea generation. Include a prompt creation step that allows tagging using '@' syntax, and finally, integrate with Runway ML for image generation. Additionally, modify the site sidebar to remove the Dashboard/Projects entry and add Photoshoots as a primary feature.",
+        "testStrategy": "Conduct a step-by-step integration test for the entire photoshoot creation flow: verify that the product selection correctly pulls and displays products uploaded via Task 8; test the type selection toggling functionality; ensure model selection displays the available models from Tasks 11 and 13; validate that the style selection correctly records user choices; and simulate AI product analysis and idea generation to confirm that prompt creation with '@' tagging works as expected. Also, check Runway ML integration by triggering API calls and reviewing the generation results. Finally, perform UI tests to ensure that the sidebar update properly replaces Dashboard/Projects with Photoshoots, and that the navigation throughout the multi-step process is smooth and intuitive.",
+        "status": "pending",
+        "dependencies": [
+          8,
+          11,
+          13,
+          14
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update Site Navigation",
+            "description": "Remove the Dashboard/Projects sidebar item and introduce Photoshoots as the primary feature.",
+            "dependencies": [],
+            "details": "Modify the navigation component to remove the old entry and add a new Photoshoots link. Ensure that the new link points to the photoshoot creation workflow.",
+            "status": "done",
+            "testStrategy": "Manually verify that the sidebar reflects the changes across browsers and that clicking on Photoshoots loads the corresponding interface."
+          },
+          {
+            "id": 2,
+            "title": "Implement Product Selection UI",
+            "description": "Develop a user interface for product selection leveraging the product upload and metadata infrastructure from Task 8.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a form or interactive element allowing users to upload/select products. Integrate with the existing metadata system ensuring proper validations and data binding.",
+            "status": "done",
+            "testStrategy": "Unit test the product upload function and conduct manual UI tests ensuring the correct display of product data."
+          },
+          {
+            "id": 3,
+            "title": "Create Photoshoot Type Selection Workflow",
+            "description": "Develop the initial workflow step where users specify if the photoshoot will use a model or not.",
+            "dependencies": [
+              2
+            ],
+            "details": "Design and implement a clear UI step that offers a choice between using a model or proceeding without one. Manage state based on user selection to control subsequent steps.",
+            "status": "done",
+            "testStrategy": "Use UI testing to confirm that the selection correctly routes the workflow and state management."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Model Selection Interface",
+            "description": "For users opting to use a model, integrate model selection using existing interfaces from Tasks 11 and 13.",
+            "dependencies": [
+              3
+            ],
+            "details": "Implement the model selection component by reusing the interfaces specified in previous tasks. Ensure smooth transitions and clear feedback if a model is selected.",
+            "status": "pending",
+            "testStrategy": "Perform integration tests to ensure that the model selection loads only when required and correctly returns a valid selection."
+          },
+          {
+            "id": 5,
+            "title": "Implement Style Selection Step",
+            "description": "Develop a UI component for selecting the photoshoot style (professional or UGC) building on Task 14's initial work.",
+            "dependencies": [
+              3
+            ],
+            "details": "Design and implement a style selection module that displays options for professional and user-generated content styles, with clear visual cues and explanations.",
+            "status": "pending",
+            "testStrategy": "Test selection functionality through unit tests and verify that the chosen style is correctly propagated to subsequent modules."
+          },
+          {
+            "id": 6,
+            "title": "Develop AI-Powered Product Analysis Component",
+            "description": "Implement an AI-driven module to analyze the selected product, extracting features that will influence idea generation.",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Integrate with the chosen AI engine to analyze product metadata and imagery. Present analysis results in a concise format for further processing.",
+            "status": "pending",
+            "testStrategy": "Validate analysis outputs with mock data and compare against expected feature sets; conduct performance tests for responsiveness."
+          },
+          {
+            "id": 7,
+            "title": "Integrate AI-Driven Idea Generation Module",
+            "description": "Based on the product analysis, develop an AI module that generates creative photoshoot ideas.",
+            "dependencies": [
+              6
+            ],
+            "details": "Design an API or local module that takes product analysis input and returns a list of creative suggestions. Ensure the module is flexible for future enhancements.",
+            "status": "pending",
+            "testStrategy": "Run unit and integration tests with varied inputs and verify that the generated ideas are contextually relevant."
+          },
+          {
+            "id": 8,
+            "title": "Implement Prompt Creation with '@' Tagging",
+            "description": "Develop a prompt creation interface that allows users to insert tags using the '@' syntax for enhanced idea customization.",
+            "dependencies": [
+              7
+            ],
+            "details": "Create an interactive text editor component that supports '@' tagging to reference products, models, or other assets. Provide real-time suggestions if possible.",
+            "status": "pending",
+            "testStrategy": "Perform usability tests to confirm that the tagging works smoothly and the correct prompts are generated upon selection."
+          },
+          {
+            "id": 9,
+            "title": "Integrate Runway ML for Image Generation",
+            "description": "Integrate the Runway ML interface to generate images based on the finalized prompt description and user selections.",
+            "dependencies": [
+              5,
+              8
+            ],
+            "details": "Set up the required API integration with Runway ML. Ensure that the prompt and style selections are correctly sent to the generation service and results are properly displayed.",
+            "status": "pending",
+            "testStrategy": "Conduct API integration tests and simulate various input scenarios to validate image generation quality and response times."
+          },
+          {
+            "id": 10,
+            "title": "Develop Backend Orchestration and State Management",
+            "description": "Implement backend functionality to coordinate and persist the state of the multi-step photoshoot creation process.",
+            "dependencies": [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9
+            ],
+            "details": "Design and implement endpoints or service layers to manage workflow data, user inputs, and AI responses. Ensure data consistency and error handling across state transitions.",
+            "status": "pending",
+            "testStrategy": "Write integration tests that simulate the complete workflow, confirming that data flows correctly between steps and is persisted properly."
+          },
+          {
+            "id": 11,
+            "title": "Implement Error Handling and User Notifications",
+            "description": "Develop robust error handling mechanisms and user feedback systems throughout the photoshoot creation process.",
+            "dependencies": [
+              10
+            ],
+            "details": "Implement try-catch blocks, user-friendly error messages, and notifications for successful and failed operations. Ensure that errors in one step do not crash the entire workflow.",
+            "status": "pending",
+            "testStrategy": "Perform negative testing and simulate failure scenarios to verify that errors are captured and appropriate notifications are displayed."
+          },
+          {
+            "id": 12,
+            "title": "End-to-End Integration Testing and Documentation",
+            "description": "Conduct comprehensive end-to-end tests of the complete photoshoot system and prepare detailed documentation for deployment and future maintenance.",
+            "dependencies": [
+              11
+            ],
+            "details": "Integrate unit, integration, and manual testing scripts covering all modules from frontend to backend. Document system flows, API endpoints, and development notes.",
+            "status": "pending",
+            "testStrategy": "Execute full workflow tests in a staging environment, gather test reports, and update documentation based on feedback and final system behavior."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-07-02T02:25:42.975Z",
-      "updated": "2025-07-03T03:44:18.047Z",
+      "updated": "2025-07-03T21:54:44.572Z",
       "description": "Tasks for master context"
     }
   }
