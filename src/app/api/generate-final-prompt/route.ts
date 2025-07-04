@@ -83,14 +83,17 @@ export async function POST(request: NextRequest) {
 
 **Requirements:**
 Generate a single, comprehensive Runway ML prompt that:
-1. Includes product tag (@${product_details.tag}) for product reference
-${model_details ? `2. Includes model tag (@${model_details.tag}) for model reference` : '2. Focuses entirely on the product without human subjects'}
+1. Always references the product using its @tag (@${product_details.tag}) throughout the prompt - never use the plain product name
+${model_details ? `2. Always references the model using their @tag (@${model_details.tag}) throughout the prompt - never use the plain model name` : '2. Focuses entirely on the product without human subjects'}
 3. Describes the exact scene, lighting, and composition
 4. Specifies camera settings and photographic style
 5. Emphasizes commercial quality and ${photoshoot_style} aesthetic
 6. Is optimized for photorealistic AI generation
+7. Uses @tag references consistently for both product and model mentions
 
-Format as a single paragraph prompt, maximum 200 words, with clear @tag references.`
+IMPORTANT: Every time you mention the product, use @${product_details.tag} (not "${product_details.name}"). ${model_details ? `Every time you mention the model, use @${model_details.tag} (not "${model_details.name}").` : ''}
+
+Format as a single paragraph prompt, maximum 200 words, with clear @tag references throughout.`
                 }
             ],
             max_tokens: 300,

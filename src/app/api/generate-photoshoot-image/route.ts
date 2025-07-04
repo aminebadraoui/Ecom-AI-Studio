@@ -64,13 +64,57 @@ export async function POST(request: NextRequest) {
         console.log('Prompt:', final_prompt)
         console.log('Reference images:', reference_images?.length || 0)
 
+        // Get photoshoot details to find product_id
+        const { data: photoshoot, error: photoshootError } = await supabaseAdmin
+            .from('photoshoots')
+            .select('product_id')
+            .eq('id', photoshoot_id)
+            .eq('user_id', user.id)
+            .single()
+
+        if (photoshootError || !photoshoot) {
+            return NextResponse.json({
+                error: 'Photoshoot not found',
+                details: photoshootError?.message
+            }, { status: 404 })
+        }
+
+        // Get product dimensions and tag
+        const { data: product, error: productError } = await supabaseAdmin
+            .from('products')
+            .select('physical_dimensions, tag')
+            .eq('id', photoshoot.product_id)
+            .eq('user_id', user.id)
+            .single()
+
+        if (productError || !product) {
+            return NextResponse.json({
+                error: 'Product not found',
+                details: productError?.message
+            }, { status: 404 })
+        }
+
+        // Extract dimensions for the prompt
+        let dimensionText = ''
+        if (product.physical_dimensions) {
+            const dims = product.physical_dimensions
+            const unit = dims.unit || 'cm'
+            const productTag = product.tag ? `@${product.tag}` : 'the product'
+            dimensionText = ` The product ${productTag} has dimensions of ${dims.width}x${dims.length}x${dims.depth} ${unit}. Ensure ${productTag} appears proportionally accurate relative to the model's hands and body - maintain realistic size relationships and proper scale.`
+        }
+
+        // Enhance the prompt with dimension information
+        const enhancedPrompt = final_prompt + dimensionText
+
+        console.log('Enhanced prompt with dimensions:', enhancedPrompt)
+
         // Update photoshoot status to processing (using original schema)
         await supabaseAdmin
             .from('photoshoots')
             .update({
                 status: 'processing',
                 generation_settings: {
-                    final_prompt,
+                    final_prompt: enhancedPrompt,
                     reference_images: reference_images || [],
                     reference_tags: reference_tags || []
                 }
@@ -83,7 +127,7 @@ export async function POST(request: NextRequest) {
             console.log('Calling Replicate Runway ML API...')
 
             const input = {
-                prompt: final_prompt,
+                prompt: enhancedPrompt,
                 resolution: "1080p",
                 aspect_ratio: "4:3",
                 reference_images: reference_images || [],
@@ -125,8 +169,6 @@ export async function POST(request: NextRequest) {
             } else if (output && typeof output === 'object') {
                 // Try to extract URL from object properties first
                 const obj = output as any
-                console.log('Object properties:', Object.keys(obj))
-                console.log('Object values:', Object.getOwnPropertyNames(obj))
 
                 if (obj.url && typeof obj.url === 'string') {
                     imageUrl = obj.url
@@ -174,11 +216,48 @@ export async function POST(request: NextRequest) {
 
             console.log('Image uploaded to Cloudinary:', generatedImageUrl)
 
-            // Update photoshoot status to completed
+            // Create the generated image object
+            const generatedImageObject = {
+                url: generatedImageUrl,
+                thumbnail_url: thumbnailUrl,
+                created_at: new Date().toISOString(),
+                is_primary: true,
+                generation_prompt: enhancedPrompt,
+                cloudinary_public_id: cloudinaryResult.public_id,
+                metadata: {
+                    reference_images: reference_images || [],
+                    reference_tags: reference_tags || [],
+                    replicate_output: output
+                }
+            }
+
+            // Get current photoshoot to check existing generated_images
+            const { data: currentPhotoshoot, error: fetchError } = await supabaseAdmin
+                .from('photoshoots')
+                .select('generated_images')
+                .eq('id', photoshoot_id)
+                .eq('user_id', user.id)
+                .single()
+
+            if (fetchError) {
+                console.error('Error fetching current photoshoot:', fetchError)
+                return NextResponse.json({
+                    error: 'Failed to fetch current photoshoot',
+                    details: fetchError.message
+                }, { status: 500 })
+            }
+
+            // Add the new image to the generated_images array
+            const existingImages = currentPhotoshoot.generated_images || []
+            const updatedImages = [...existingImages, generatedImageObject]
+
+            // Update photoshoot with new image and status
             const { data: updatedPhotoshoot, error: updateError } = await supabaseAdmin
                 .from('photoshoots')
                 .update({
-                    status: 'completed'
+                    status: 'completed',
+                    generated_image_url: generatedImageUrl, // Keep for backward compatibility
+                    generated_images: updatedImages
                 })
                 .eq('id', photoshoot_id)
                 .eq('user_id', user.id)
@@ -200,7 +279,7 @@ export async function POST(request: NextRequest) {
                     photoshoot_id,
                     image_url: generatedImageUrl,
                     thumbnail_url: thumbnailUrl,
-                    generation_prompt: final_prompt,
+                    generation_prompt: enhancedPrompt,
                     generation_metadata: {
                         reference_images: reference_images || [],
                         reference_tags: reference_tags || [],
@@ -247,7 +326,7 @@ export async function POST(request: NextRequest) {
                 .update({
                     status: 'failed',
                     generation_settings: {
-                        final_prompt,
+                        final_prompt: enhancedPrompt,
                         reference_images: reference_images || [],
                         reference_tags: reference_tags || [],
                         error: replicateError instanceof Error ? replicateError.message : 'Unknown error'

@@ -21,13 +21,25 @@ interface Model {
 
 interface Photoshoot {
     id: string
+    user_id: string
     name: string
-    tag: string
-    type: 'product_only' | 'with_model'
-    style: 'professional' | 'ugc'
-    generation_status: 'pending' | 'generating' | 'completed' | 'failed'
+    product_id: string
+    model_id?: string | null
+    style_type: 'professional' | 'ugc'
+    scene_description: string
+    ai_suggested: boolean
+    generation_settings?: {
+        type: 'product_only' | 'with_model'
+        style: 'professional' | 'ugc'
+        name: string
+        scene_details?: string
+        product_analysis?: string
+        final_prompt?: string
+    }
+    status: 'pending' | 'generating' | 'completed' | 'failed'
     generated_image_url?: string
-    credits_used: number
+    generated_images?: any[]
+    credits_used?: number
     created_at: string
     products: Product
     models?: Model | null
@@ -185,10 +197,20 @@ export default function PhotoshootsPage() {
                             >
                                 {/* Image */}
                                 <div className="aspect-video bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
-                                    {photoshoot.generated_image_url ? (
+                                    {photoshoot.generated_images && photoshoot.generated_images.length > 0 ? (
+                                        <img
+                                            src={photoshoot.generated_images[0].url}
+                                            alt={photoshoot.products.name}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement
+                                                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik02MCA2MEgxNDBWMTQwSDYwVjYwWiIgZmlsbD0iI0U1RTdFQiIvPgo8L3N2Zz4K'
+                                            }}
+                                        />
+                                    ) : photoshoot.generated_image_url ? (
                                         <img
                                             src={photoshoot.generated_image_url}
-                                            alt={photoshoot.name}
+                                            alt={photoshoot.products.name}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             onError={(e) => {
                                                 const target = e.target as HTMLImageElement
@@ -206,16 +228,28 @@ export default function PhotoshootsPage() {
 
                                     {/* Status Badge */}
                                     <div className="absolute top-3 right-3">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(photoshoot.generation_status)}`}>
-                                            {getStatusText(photoshoot.generation_status)}
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(photoshoot.status)}`}>
+                                            {getStatusText(photoshoot.status)}
                                         </span>
                                     </div>
+
+                                    {/* Multiple Images Indicator */}
+                                    {photoshoot.generated_images && photoshoot.generated_images.length > 1 && (
+                                        <div className="absolute bottom-3 right-3">
+                                            <div className="flex items-center px-2 py-1 bg-black/70 text-white text-xs rounded-full">
+                                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                {photoshoot.generated_images.length}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Content */}
                                 <div className="p-4">
                                     <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
-                                        {photoshoot.name}
+                                        {photoshoot.name || photoshoot.generation_settings?.name || photoshoot.products.name}
                                     </h3>
 
                                     {/* Details */}
@@ -244,9 +278,9 @@ export default function PhotoshootsPage() {
 
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="text-gray-600 dark:text-gray-400">
-                                                {photoshoot.style === 'professional' ? 'Professional' : 'UGC'} • {photoshoot.type === 'product_only' ? 'Product Only' : 'With Model'}
+                                                {photoshoot.style_type === 'professional' ? 'Professional' : 'UGC'} • {photoshoot.generation_settings?.type === 'product_only' ? 'Product Only' : 'With Model'}
                                             </span>
-                                            {photoshoot.credits_used > 0 && (
+                                            {photoshoot.credits_used && (
                                                 <span className="text-blue-600 dark:text-blue-400 font-medium">
                                                     {photoshoot.credits_used} credits
                                                 </span>

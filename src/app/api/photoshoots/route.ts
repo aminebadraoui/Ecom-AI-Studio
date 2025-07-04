@@ -33,10 +33,24 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        // Fetch user's photoshoots from database
+        // Fetch user's photoshoots from database with related product and model data
         const { data: photoshoots, error: dbError } = await supabaseAdmin
             .from('photoshoots')
-            .select('*')
+            .select(`
+                *,
+                products:product_id (
+                    id,
+                    name,
+                    tag,
+                    image_url
+                ),
+                models:model_id (
+                    id,
+                    name,
+                    tag,
+                    image_url
+                )
+            `)
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
 
@@ -108,15 +122,16 @@ export async function POST(request: NextRequest) {
             final_prompt
         } = body
 
-        // Map the frontend data to the actual database schema
+        // Map the frontend data to the actual database schema that's currently in use
         const style_type = style === 'professional' ? 'professional' : 'ugc'
         const scene_description = final_prompt || product_analysis || 'AI-generated photoshoot'
 
-        // Create the photoshoot using the correct schema
+        // Create the photoshoot using the actual database schema
         const { data: photoshoot, error: createError } = await supabaseAdmin
             .from('photoshoots')
             .insert({
                 user_id: user.id,
+                name: name || 'Untitled Photoshoot',
                 product_id,
                 model_id: type === 'with_model' ? model_id : null,
                 style_type,
