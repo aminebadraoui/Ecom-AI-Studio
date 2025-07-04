@@ -119,12 +119,12 @@ export async function POST(request: NextRequest) {
             model_id,
             scene_details,
             product_analysis,
-            final_prompt
+            final_prompts
         } = body
 
         // Map the frontend data to the actual database schema that's currently in use
         const style_type = style === 'professional' ? 'professional' : 'ugc'
-        const scene_description = final_prompt || product_analysis || 'AI-generated photoshoot'
+        const scene_description = (final_prompts && final_prompts.length > 0 ? final_prompts[0] : product_analysis) || 'AI-generated photoshoot'
 
         // Create the photoshoot using the actual database schema
         const { data: photoshoot, error: createError } = await supabaseAdmin
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
                     name,
                     scene_details,
                     product_analysis,
-                    final_prompt
+                    final_prompts
                 },
                 status: 'pending'
             })

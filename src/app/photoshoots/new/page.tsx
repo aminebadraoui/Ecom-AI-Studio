@@ -59,11 +59,14 @@ export default function NewPhotoshootPage() {
     const [selectedScene, setSelectedScene] = useState<SceneIdea | null>(null)
     const [finalPrompt, setFinalPrompt] = useState('')
     const [generatedImageUrl, setGeneratedImageUrl] = useState('')
+    const [generatedImages, setGeneratedImages] = useState<any[]>([])
     const [currentPhotoshootId, setCurrentPhotoshootId] = useState<string | null>(null)
 
     // UI state
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [currentImageIndex, setCurrentImageIndex] = useState(0)
+    const [showImageModal, setShowImageModal] = useState(false)
 
     // Load products and models
     useEffect(() => {
@@ -77,6 +80,29 @@ export default function NewPhotoshootPage() {
             }).catch(console.error)
         }
     }, [user])
+
+    // Keyboard navigation for image slider
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (generatedImages.length === 0) return
+
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault()
+                setCurrentImageIndex((prev) => prev === 0 ? generatedImages.length - 1 : prev - 1)
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault()
+                setCurrentImageIndex((prev) => prev === generatedImages.length - 1 ? 0 : prev + 1)
+            } else if (e.key === 'Escape' && showImageModal) {
+                e.preventDefault()
+                setShowImageModal(false)
+            }
+        }
+
+        if (currentStep === 'completed' || showImageModal) {
+            window.addEventListener('keydown', handleKeyDown)
+            return () => window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [currentStep, showImageModal, generatedImages.length])
 
     // Step 1: Analyze Product Image
     const analyzeProduct = async () => {
@@ -175,24 +201,24 @@ export default function NewPhotoshootPage() {
             const result = await response.json()
 
             if (!response.ok) {
-                throw new Error(result.error || 'Failed to generate final prompt')
+                throw new Error(result.error || 'Failed to generate final prompts')
             }
 
-            setFinalPrompt(result.final_prompt)
+            setFinalPrompt(result.final_prompts[0])
             setCurrentStep('generating')
 
             // Create photoshoot record and start generation
             createPhotoshootAndGenerate(result)
 
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to generate final prompt')
+            setError(err instanceof Error ? err.message : 'Failed to generate final prompts')
             setCurrentStep('error')
         } finally {
             setLoading(false)
         }
     }
 
-    // Step 5: Create Photoshoot and Generate Image
+    // Step 5: Create Photoshoot and Generate Images
     const createPhotoshootAndGenerate = async (promptData: any) => {
         setLoading(true)
 
@@ -209,7 +235,7 @@ export default function NewPhotoshootPage() {
                     style: photoshootStyle,
                     scene_details: selectedScene,
                     product_analysis: productAnalysis,
-                    final_prompt: promptData.final_prompt
+                    final_prompts: promptData.final_prompts
                 })
             })
 
@@ -221,13 +247,13 @@ export default function NewPhotoshootPage() {
 
             setCurrentPhotoshootId(photoshootResult.photoshoot.id)
 
-            // Then generate the image
+            // Then generate all 5 images
             const generateResponse = await fetch('/api/generate-photoshoot-image', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     photoshoot_id: photoshootResult.photoshoot.id,
-                    final_prompt: promptData.final_prompt,
+                    final_prompts: promptData.final_prompts,
                     reference_images: promptData.reference_images,
                     reference_tags: promptData.reference_tags
                 })
@@ -236,10 +262,10 @@ export default function NewPhotoshootPage() {
             const generateResult = await generateResponse.json()
 
             if (!generateResponse.ok) {
-                throw new Error(generateResult.error || 'Failed to generate image')
+                throw new Error(generateResult.error || 'Failed to generate images')
             }
 
-            setGeneratedImageUrl(generateResult.generated_image_url)
+            setGeneratedImages(generateResult.generated_images)
             setCurrentStep('completed')
 
         } catch (err) {
@@ -257,8 +283,11 @@ export default function NewPhotoshootPage() {
         setSelectedScene(null)
         setFinalPrompt('')
         setGeneratedImageUrl('')
+        setGeneratedImages([])
         setCurrentPhotoshootId(null)
         setError('')
+        setCurrentImageIndex(0)
+        setShowImageModal(false)
     }
 
     const canProceed = photoshootName && selectedProduct && (photoshootType === 'product_only' || selectedModel)
@@ -456,12 +485,6 @@ export default function NewPhotoshootPage() {
                             <p className="text-gray-600 dark:text-gray-400">
                                 Creating creative photoshoot scene ideas based on your product analysis...
                             </p>
-                            {productAnalysis && (
-                                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-left">
-                                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Product Analysis:</h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">{productAnalysis}</p>
-                                </div>
-                            )}
                         </div>
                     </div>
                 )}
@@ -497,16 +520,10 @@ export default function NewPhotoshootPage() {
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Generating Final Prompt</h3>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Generating Final Prompts</h3>
                             <p className="text-gray-600 dark:text-gray-400">
-                                Creating the optimized prompt for Runway ML based on your selected scene...
+                                Creating 5 optimized prompt variations for Runway ML based on your selected scene...
                             </p>
-                            {selectedScene && (
-                                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-left">
-                                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Selected Scene: {selectedScene.title}</h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">{selectedScene.description}</p>
-                                </div>
-                            )}
                         </div>
                     </div>
                 )}
@@ -515,21 +532,32 @@ export default function NewPhotoshootPage() {
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Generating Image</h3>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Generating 5 Images</h3>
                             <p className="text-gray-600 dark:text-gray-400">
-                                Runway ML is generating your photoshoot image. This may take a few minutes...
+                                Runway ML is generating 5 unique photoshoot image variations. This may take several minutes...
                             </p>
-                            {finalPrompt && (
-                                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-left">
-                                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Final Prompt:</h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">{finalPrompt}</p>
+                            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                                    💡 5 images = 25 credits total (5 credits per image)
+                                </p>
+                            </div>
+
+                            {/* Product Scale Information */}
+                            {selectedProduct?.physical_dimensions && (
+                                <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                                    <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">
+                                        📏 Product Dimensions: {selectedProduct.physical_dimensions.width}×{selectedProduct.physical_dimensions.length}×{selectedProduct.physical_dimensions.depth} {selectedProduct.physical_dimensions.unit}
+                                    </p>
+                                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                                        AI is optimizing scale consistency across all variations
+                                    </p>
                                 </div>
                             )}
                         </div>
                     </div>
                 )}
 
-                {currentStep === 'completed' && (
+                {currentStep === 'completed' && generatedImages.length > 0 && (
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <div className="text-center">
                             <div className="mb-4">
@@ -539,33 +567,95 @@ export default function NewPhotoshootPage() {
                                     </svg>
                                 </div>
                             </div>
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Photoshoot Generated!</h3>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">5 Images Generated!</h3>
                             <p className="text-gray-600 dark:text-gray-400 mb-6">
-                                Your AI-generated photoshoot is ready. View the result below.
+                                Your AI-generated photoshoot with 5 unique variations is ready.
                             </p>
 
-                            {generatedImageUrl && (
-                                <div className="mb-6">
-                                    <div className="max-w-md mx-auto border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                            {/* Image Slider */}
+                            <div className="mb-6">
+                                <div className="relative max-w-2xl mx-auto">
+                                    {/* Main Image */}
+                                    <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                                         <img
-                                            src={generatedImageUrl}
-                                            alt="Generated photoshoot"
-                                            className="w-full h-auto"
+                                            src={generatedImages[currentImageIndex]?.url}
+                                            alt={`Generated image ${currentImageIndex + 1}`}
+                                            className="w-full h-full object-cover cursor-pointer"
+                                            onClick={() => setShowImageModal(true)}
                                         />
+
+                                        {/* Navigation Arrows */}
+                                        {generatedImages.length > 1 && (
+                                            <>
+                                                <button
+                                                    onClick={() => setCurrentImageIndex((prev) => prev === 0 ? generatedImages.length - 1 : prev - 1)}
+                                                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => setCurrentImageIndex((prev) => prev === generatedImages.length - 1 ? 0 : prev + 1)}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                                    </svg>
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {/* Image Counter */}
+                                        <div className="absolute bottom-2 right-2 bg-black/50 text-white text-sm px-2 py-1 rounded">
+                                            {currentImageIndex + 1} / {generatedImages.length}
+                                        </div>
                                     </div>
+
+                                    {/* Thumbnail Strip */}
+                                    <div className="flex gap-2 mt-4 justify-center">
+                                        {generatedImages.map((image, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => setCurrentImageIndex(index)}
+                                                className={`w-16 h-12 rounded border-2 overflow-hidden transition-all ${index === currentImageIndex
+                                                    ? 'border-blue-500 ring-2 ring-blue-200'
+                                                    : 'border-gray-300 hover:border-gray-400'
+                                                    }`}
+                                            >
+                                                <img
+                                                    src={image.thumbnail_url || image.url}
+                                                    alt={`Thumbnail ${index + 1}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                                        Click on image to view full size • Use arrow keys to navigate
+                                    </p>
                                 </div>
-                            )}
+                            </div>
 
                             <div className="flex gap-4 justify-center">
+                                {currentPhotoshootId && (
+                                    <a
+                                        href={`/photoshoots/${currentPhotoshootId}`}
+                                        className="bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                    >
+                                        View Photoshoot Details
+                                    </a>
+                                )}
                                 <a
                                     href="/photoshoots"
-                                    className="bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                    className="bg-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
                                 >
                                     View All Photoshoots
                                 </a>
                                 <button
                                     onClick={restartProcess}
-                                    className="bg-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                                    className="bg-gray-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-600 transition-colors"
                                 >
                                     Create Another
                                 </button>
@@ -593,6 +683,63 @@ export default function NewPhotoshootPage() {
                             >
                                 Try Again
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Full Size Image Modal */}
+                {showImageModal && generatedImages.length > 0 && (
+                    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setShowImageModal(false)}>
+                        <div className="relative max-w-4xl max-h-full">
+                            <img
+                                src={generatedImages[currentImageIndex]?.url}
+                                alt={`Generated image ${currentImageIndex + 1}`}
+                                className="max-w-full max-h-full object-contain rounded-lg"
+                                onClick={(e) => e.stopPropagation()}
+                            />
+
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setShowImageModal(false)}
+                                className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+
+                            {/* Navigation in Modal */}
+                            {generatedImages.length > 1 && (
+                                <>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setCurrentImageIndex((prev) => prev === 0 ? generatedImages.length - 1 : prev - 1)
+                                        }}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-colors"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setCurrentImageIndex((prev) => prev === generatedImages.length - 1 ? 0 : prev + 1)
+                                        }}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-colors"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </button>
+                                </>
+                            )}
+
+                            {/* Image Counter in Modal */}
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white text-sm px-3 py-1 rounded-full">
+                                {currentImageIndex + 1} / {generatedImages.length}
+                            </div>
                         </div>
                     </div>
                 )}

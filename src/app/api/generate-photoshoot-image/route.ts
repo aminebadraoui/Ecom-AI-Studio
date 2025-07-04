@@ -49,19 +49,19 @@ export async function POST(request: NextRequest) {
         const body = await request.json()
         const {
             photoshoot_id,
-            final_prompt,
+            final_prompts,
             reference_images,
             reference_tags
         } = body
 
-        if (!photoshoot_id || !final_prompt) {
+        if (!photoshoot_id || !final_prompts || !Array.isArray(final_prompts) || final_prompts.length !== 5) {
             return NextResponse.json({
-                error: 'Photoshoot ID and final prompt are required'
+                error: 'Photoshoot ID and exactly 5 final prompts are required'
             }, { status: 400 })
         }
 
-        console.log('Generating photoshoot image for ID:', photoshoot_id)
-        console.log('Prompt:', final_prompt)
+        console.log('Generating 5 photoshoot images for ID:', photoshoot_id)
+        console.log('Prompts:', final_prompts.map((p, i) => `${i + 1}: ${p.substring(0, 50)}...`))
         console.log('Reference images:', reference_images?.length || 0)
 
         // Get photoshoot details to find product_id
@@ -94,27 +94,59 @@ export async function POST(request: NextRequest) {
             }, { status: 404 })
         }
 
-        // Extract dimensions for the prompt
+        // Add dimension information to prompts for better scale consistency
         let dimensionText = ''
-        if (product.physical_dimensions) {
+        if (product && product.physical_dimensions) {
             const dims = product.physical_dimensions
             const unit = dims.unit || 'cm'
             const productTag = product.tag ? `@${product.tag}` : 'the product'
-            dimensionText = ` The product ${productTag} has dimensions of ${dims.width}x${dims.length}x${dims.depth} ${unit}. Ensure ${productTag} appears proportionally accurate relative to the model's hands and body - maintain realistic size relationships and proper scale.`
+
+            // Calculate volume and create detailed size description
+            const w = parseFloat(dims.width)
+            const l = parseFloat(dims.length)
+            const d = parseFloat(dims.depth)
+
+            // Convert to cm for reference
+            let wCm = w, lCm = l, dCm = d
+            if (unit === 'in') {
+                wCm = w * 2.54
+                lCm = l * 2.54
+                dCm = d * 2.54
+            } else if (unit === 'mm') {
+                wCm = w / 10
+                lCm = l / 10
+                dCm = d / 10
+            }
+
+            // Generate specific scale instructions
+            const maxDim = Math.max(wCm, lCm, dCm)
+            let scaleInstructions = ''
+
+            if (maxDim < 5) {
+                scaleInstructions = 'CRITICAL SCALE: This is a very small product that fits between fingers. When held, it should appear tiny relative to hands, roughly the size of a large coin or small USB drive.'
+            } else if (maxDim < 10) {
+                scaleInstructions = 'CRITICAL SCALE: This is a palm-sized product. When held, it should fit comfortably in one hand without overwhelming the palm, similar to a smartphone or small cosmetic item.'
+            } else if (maxDim < 15) {
+                scaleInstructions = 'CRITICAL SCALE: This is a handheld product requiring a full grip. It should appear substantial in hands but not oversized, like a standard book or tablet.'
+            } else {
+                scaleInstructions = 'CRITICAL SCALE: This is a larger product requiring careful handling. It should appear appropriately sized for its stated dimensions.'
+            }
+
+            dimensionText = ` The product ${productTag} has exact dimensions of ${dims.width}x${dims.length}x${dims.depth} ${unit}. ${scaleInstructions} Ensure ${productTag} appears proportionally accurate relative to the model's hands and body - maintain realistic size relationships and proper scale. The product must not appear too large or too small compared to human proportions. Reference the exact measurements when depicting scale.`
         }
 
-        // Enhance the prompt with dimension information
-        const enhancedPrompt = final_prompt + dimensionText
+        // Enhance all prompts with dimension information
+        const enhancedPrompts = final_prompts.map(prompt => prompt + dimensionText)
 
-        console.log('Enhanced prompt with dimensions:', enhancedPrompt)
+        console.log('Enhanced prompts with dimensions:', enhancedPrompts.map((p, i) => `${i + 1}: ${p.substring(0, 50)}...`))
 
-        // Update photoshoot status to processing (using original schema)
+        // Update photoshoot status to generating
         await supabaseAdmin
             .from('photoshoots')
             .update({
-                status: 'processing',
+                status: 'generating',
                 generation_settings: {
-                    final_prompt: enhancedPrompt,
+                    final_prompts: enhancedPrompts,
                     reference_images: reference_images || [],
                     reference_tags: reference_tags || []
                 }
@@ -123,112 +155,138 @@ export async function POST(request: NextRequest) {
             .eq('user_id', user.id)
 
         try {
-            // Call Replicate Runway ML API
-            console.log('Calling Replicate Runway ML API...')
+            const generatedImages = []
+            const errors: Array<{ index: number; error: string }> = []
 
-            const input = {
-                prompt: enhancedPrompt,
-                resolution: "1080p",
-                aspect_ratio: "4:3",
-                reference_images: reference_images || [],
-                reference_tags: reference_tags || []
-            }
+            // Generate 5 images in parallel
+            const imagePromises = enhancedPrompts.map(async (prompt, index) => {
+                try {
+                    console.log(`Generating image ${index + 1}/5...`)
 
-            console.log('Replicate input:', input)
+                    // Use a base seed and increment for each variation to maintain some consistency
+                    const baseSeed = Math.floor(Math.random() * 1000000)
+                    const seed = baseSeed + index
 
-            const output = await replicate.run("runwayml/gen4-image", { input })
+                    // Call Replicate Runway ML API with enhanced parameters for consistency
+                    const input = {
+                        prompt: prompt,
+                        resolution: "1080p",
+                        aspect_ratio: "4:3",
+                        reference_images: reference_images || [],
+                        reference_tags: reference_tags || [],
+                        seed: seed, // Use seed for more consistent results
+                        guidance_scale: 7.5, // Higher guidance for better prompt adherence
+                        num_inference_steps: 50 // More steps for better quality
+                    }
 
-            console.log('Replicate output:', output)
-            console.log('Output type:', typeof output)
+                    console.log(`Replicate input ${index + 1}:`, input)
 
-            if (!output) {
-                throw new Error('No output received from Replicate')
-            }
+                    const output = await replicate.run("runwayml/gen4-image", { input })
 
-            // Handle different output types from Replicate
-            let imageUrl: string
+                    console.log(`Replicate output ${index + 1}:`, output)
+                    console.log(`Output type ${index + 1}:`, typeof output)
 
-            if (typeof output === 'string') {
-                imageUrl = output
-            } else if (Array.isArray(output) && output.length > 0) {
-                imageUrl = output[0] as string
-            } else if (output && typeof output === 'object' && 'url' in output && typeof output.url === 'function') {
-                // Handle Replicate FileOutput object
-                console.log('Processing Replicate FileOutput object...')
-                const urlResult = output.url()
-                // Ensure we get a string URL
-                if (typeof urlResult === 'string') {
-                    imageUrl = urlResult
-                } else if (urlResult && typeof urlResult === 'object' && 'href' in urlResult) {
-                    imageUrl = urlResult.href
-                } else {
-                    imageUrl = String(urlResult)
+                    if (!output) {
+                        throw new Error('No output received from Replicate')
+                    }
+
+                    // Handle different output types from Replicate
+                    let imageUrl: string
+
+                    if (typeof output === 'string') {
+                        imageUrl = output
+                    } else if (Array.isArray(output) && output.length > 0) {
+                        imageUrl = output[0] as string
+                    } else if (output && typeof output === 'object' && 'url' in output && typeof output.url === 'function') {
+                        // Handle Replicate FileOutput object
+                        console.log(`Processing Replicate FileOutput object ${index + 1}...`)
+                        const urlResult = output.url()
+                        // Ensure we get a string URL
+                        if (typeof urlResult === 'string') {
+                            imageUrl = urlResult
+                        } else if (urlResult && typeof urlResult === 'object' && 'href' in urlResult) {
+                            imageUrl = urlResult.href
+                        } else {
+                            imageUrl = String(urlResult)
+                        }
+                        console.log(`Extracted URL from FileOutput ${index + 1}:`, urlResult)
+                        console.log(`Converted to string ${index + 1}:`, imageUrl)
+                    } else if (output && typeof output === 'object') {
+                        // Try to extract URL from object properties first
+                        const obj = output as any
+
+                        if (obj.url && typeof obj.url === 'string') {
+                            imageUrl = obj.url
+                            console.log(`Found URL property ${index + 1}:`, imageUrl)
+                        } else if (obj.image_url) {
+                            imageUrl = obj.image_url
+                        } else if (obj.data && obj.data.url) {
+                            imageUrl = obj.data.url
+                        } else {
+                            throw new Error(`Invalid output format from Replicate. Object: ${JSON.stringify(obj)}`)
+                        }
+                    } else {
+                        throw new Error(`Invalid output format from Replicate. Type: ${typeof output}`)
+                    }
+
+                    console.log(`Extracted image URL ${index + 1}:`, imageUrl)
+
+                    // Validate that we have a proper URL or data URL
+                    if (!imageUrl || typeof imageUrl !== 'string' || (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:'))) {
+                        throw new Error(`Invalid image URL received: ${typeof imageUrl === 'string' ? imageUrl.substring(0, 100) + '...' : imageUrl}`)
+                    }
+
+                    // Upload the generated image to Cloudinary
+                    console.log(`Uploading generated image ${index + 1} to Cloudinary...`)
+
+                    const cloudinaryResult = await cloudinary.uploader.upload(imageUrl, {
+                        folder: `EcomAIStudio/${user.id}/generated`,
+                        public_id: `photoshoot_${photoshoot_id}_${index + 1}_${Date.now()}`,
+                        resource_type: 'image',
+                        transformation: [
+                            { quality: 'auto', fetch_format: 'auto' }
+                        ]
+                    })
+
+                    const generatedImageUrl = cloudinaryResult.secure_url
+                    const thumbnailUrl = cloudinary.url(cloudinaryResult.public_id, {
+                        transformation: [
+                            { width: 400, height: 300, crop: 'fill', quality: 'auto', fetch_format: 'auto' }
+                        ]
+                    })
+
+                    console.log(`Image ${index + 1} uploaded to Cloudinary:`, generatedImageUrl)
+
+                    // Create the generated image object
+                    return {
+                        url: generatedImageUrl,
+                        thumbnail_url: thumbnailUrl,
+                        created_at: new Date().toISOString(),
+                        is_primary: index === 0, // First image is primary
+                        generation_prompt: prompt,
+                        cloudinary_public_id: cloudinaryResult.public_id,
+                        variation_index: index + 1,
+                        metadata: {
+                            reference_images: reference_images || [],
+                            reference_tags: reference_tags || [],
+                            replicate_output: output
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error generating image ${index + 1}:`, error)
+                    errors.push({ index: index + 1, error: error instanceof Error ? error.message : 'Unknown error' })
+                    return null
                 }
-                console.log('Extracted URL from FileOutput:', urlResult)
-                console.log('Converted to string:', imageUrl)
-            } else if (output && typeof output === 'object') {
-                // Try to extract URL from object properties first
-                const obj = output as any
-
-                if (obj.url && typeof obj.url === 'string') {
-                    imageUrl = obj.url
-                    console.log('Found URL property:', imageUrl)
-                } else if (obj.image_url) {
-                    imageUrl = obj.image_url
-                } else if (obj.data && obj.data.url) {
-                    imageUrl = obj.data.url
-                } else if ('getReader' in output) {
-                    // Only process as ReadableStream if no URL found
-                    console.log('No URL found, processing ReadableStream with binary data...')
-                    throw new Error('ReadableStream processing disabled - check for URL properties first')
-                } else {
-                    throw new Error(`Invalid output format from Replicate. Object: ${JSON.stringify(obj)}`)
-                }
-            } else {
-                throw new Error(`Invalid output format from Replicate. Type: ${typeof output}`)
-            }
-
-            console.log('Extracted image URL:', imageUrl)
-
-            // Validate that we have a proper URL or data URL
-            if (!imageUrl || typeof imageUrl !== 'string' || (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:'))) {
-                throw new Error(`Invalid image URL received: ${typeof imageUrl === 'string' ? imageUrl.substring(0, 100) + '...' : imageUrl}`)
-            }
-
-            // Upload the generated image to Cloudinary
-            console.log('Uploading generated image to Cloudinary...')
-
-            const cloudinaryResult = await cloudinary.uploader.upload(imageUrl, {
-                folder: `EcomAIStudio/${user.id}/generated`,
-                public_id: `photoshoot_${photoshoot_id}_${Date.now()}`,
-                resource_type: 'image',
-                transformation: [
-                    { quality: 'auto', fetch_format: 'auto' }
-                ]
             })
 
-            const generatedImageUrl = cloudinaryResult.secure_url
-            const thumbnailUrl = cloudinary.url(cloudinaryResult.public_id, {
-                transformation: [
-                    { width: 400, height: 300, crop: 'fill', quality: 'auto', fetch_format: 'auto' }
-                ]
-            })
+            // Wait for all images to be generated
+            const results = await Promise.all(imagePromises)
+            const successfulImages = results.filter(result => result !== null)
 
-            console.log('Image uploaded to Cloudinary:', generatedImageUrl)
+            console.log(`Successfully generated ${successfulImages.length}/5 images`)
 
-            // Create the generated image object
-            const generatedImageObject = {
-                url: generatedImageUrl,
-                thumbnail_url: thumbnailUrl,
-                created_at: new Date().toISOString(),
-                is_primary: true,
-                generation_prompt: enhancedPrompt,
-                cloudinary_public_id: cloudinaryResult.public_id,
-                metadata: {
-                    reference_images: reference_images || [],
-                    reference_tags: reference_tags || [],
-                    replicate_output: output
-                }
+            if (successfulImages.length === 0) {
+                throw new Error('Failed to generate any images')
             }
 
             // Get current photoshoot to check existing generated_images
@@ -247,16 +305,16 @@ export async function POST(request: NextRequest) {
                 }, { status: 500 })
             }
 
-            // Add the new image to the generated_images array
+            // Add all new images to the generated_images array
             const existingImages = currentPhotoshoot.generated_images || []
-            const updatedImages = [...existingImages, generatedImageObject]
+            const updatedImages = [...existingImages, ...successfulImages]
 
-            // Update photoshoot with new image and status
+            // Update photoshoot with new images and status
             const { data: updatedPhotoshoot, error: updateError } = await supabaseAdmin
                 .from('photoshoots')
                 .update({
                     status: 'completed',
-                    generated_image_url: generatedImageUrl, // Keep for backward compatibility
+                    generated_image_url: successfulImages[0].url, // Keep first image for backward compatibility
                     generated_images: updatedImages
                 })
                 .eq('id', photoshoot_id)
@@ -272,49 +330,28 @@ export async function POST(request: NextRequest) {
                 }, { status: 500 })
             }
 
-            // Create a generated photo record
-            const { data: generatedPhoto, error: photoError } = await supabaseAdmin
-                .from('generated_photos')
-                .insert({
-                    photoshoot_id,
-                    image_url: generatedImageUrl,
-                    thumbnail_url: thumbnailUrl,
-                    generation_prompt: enhancedPrompt,
-                    generation_metadata: {
-                        reference_images: reference_images || [],
-                        reference_tags: reference_tags || [],
-                        generated_at: new Date().toISOString(),
-                        cloudinary_public_id: cloudinaryResult.public_id,
-                        replicate_output: output
-                    }
-                })
-                .select()
-                .single()
-
-            if (photoError) {
-                console.error('Error creating generated photo:', photoError)
-                // Continue anyway, photoshoot was created successfully
-            }
-
-            // Deduct credits using the original function
+            // Deduct credits (5 credits per image, so 25 total)
+            const creditsUsed = successfulImages.length * 5
             const creditsDeducted = await supabaseAdmin.rpc('update_user_credits', {
                 user_id_param: user.id,
-                amount_param: -5, // Deduct 5 credits for photoshoot generation
+                amount_param: -creditsUsed,
                 transaction_type_param: 'usage',
-                description_param: 'Photoshoot generation',
+                description_param: `Photoshoot generation (${successfulImages.length} images)`,
                 reference_id_param: photoshoot_id
             })
 
-            console.log('Photoshoot generation completed successfully')
+            console.log(`Photoshoot generation completed successfully. Generated ${successfulImages.length} images, used ${creditsUsed} credits`)
 
             return NextResponse.json({
                 success: true,
                 photoshoot: updatedPhotoshoot,
-                generated_photo: generatedPhoto,
-                generated_image_url: generatedImageUrl,
-                thumbnail_url: thumbnailUrl,
-                credits_used: 5,
-                message: 'Photoshoot image generated successfully'
+                generated_images: successfulImages,
+                images_generated: successfulImages.length,
+                credits_used: creditsUsed,
+                errors: errors.length > 0 ? errors : undefined,
+                message: errors.length > 0
+                    ? `Generated ${successfulImages.length}/5 images (${errors.length} failed)`
+                    : 'All 5 photoshoot images generated successfully'
             })
 
         } catch (replicateError) {
@@ -326,7 +363,7 @@ export async function POST(request: NextRequest) {
                 .update({
                     status: 'failed',
                     generation_settings: {
-                        final_prompt: enhancedPrompt,
+                        final_prompts: enhancedPrompts,
                         reference_images: reference_images || [],
                         reference_tags: reference_tags || [],
                         error: replicateError instanceof Error ? replicateError.message : 'Unknown error'
@@ -336,16 +373,16 @@ export async function POST(request: NextRequest) {
                 .eq('user_id', user.id)
 
             return NextResponse.json({
-                error: 'Failed to generate image',
+                error: 'Failed to generate images',
                 details: replicateError instanceof Error ? replicateError.message : 'Unknown error'
             }, { status: 500 })
         }
 
     } catch (error) {
-        console.error('Error generating photoshoot image:', error)
+        console.error('Error generating photoshoot images:', error)
 
         return NextResponse.json({
-            error: 'Failed to generate photoshoot image',
+            error: 'Failed to generate photoshoot images',
             details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 })
     }
