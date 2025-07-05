@@ -112,17 +112,19 @@ export async function POST(request: NextRequest) {
 
         console.log('Generating image with prompt:', prompt)
 
-        // Generate image with Imagen-4 via Replicate
+        // Generate image with flux-kontext-max via Replicate
         const output = await replicate.run(
-            "google/imagen-4", // Correct Imagen-4 model on Replicate
+            "black-forest-labs/flux-kontext-max", // Use flux-kontext-max for model generation
             {
                 input: {
                     prompt: prompt,
                     aspect_ratio: "1:1", // Square format for portraits
-                    safety_filter_level: "block_medium_and_above"
+                    output_format: "jpg",
+                    safety_tolerance: 2,
+                    prompt_upsampling: true
                 }
             }
-        ) as unknown as string
+        )
 
         if (!output) {
             return NextResponse.json(
@@ -131,7 +133,37 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const imageUrl = output
+        // Handle flux-kontext-max output format
+        let imageUrl: string = ''
+
+        if (typeof output === 'string') {
+            imageUrl = output
+        } else if (output && typeof output === 'object') {
+            const obj = output as any
+
+            // Check if it's a FileOutput object (from Replicate)
+            if (obj.constructor && obj.constructor.name === 'FileOutput') {
+                console.log('Handling FileOutput object...')
+
+                // FileOutput objects have a url() method
+                if (typeof obj.url === 'function') {
+                    const urlResult = obj.url()
+                    imageUrl = urlResult.href || urlResult.toString()
+                } else {
+                    throw new Error('FileOutput object missing url() method')
+                }
+            } else if (obj.output && typeof obj.output === 'string') {
+                // Standard flux-kontext-max response format
+                imageUrl = obj.output
+            } else if (obj.url && typeof obj.url === 'string') {
+                imageUrl = obj.url
+            } else {
+                throw new Error(`Invalid output format from flux-kontext-max. Object: ${JSON.stringify(obj)}`)
+            }
+        } else {
+            throw new Error(`Invalid output format from flux-kontext-max. Type: ${typeof output}`)
+        }
+
         console.log('Generated image URL:', imageUrl)
 
         // Download and upload to Cloudinary

@@ -54,6 +54,11 @@ export async function POST(request: NextRequest) {
             reference_tags
         } = body
 
+        // Add test reference image and tag
+        const testImageUrl = 'https://res.cloudinary.com/animal-motivation/image/upload/v1751663684/bcwadthjgr26fdeblspk.jpg'
+        const enhancedReferenceImages = [...(reference_images || []), testImageUrl]
+        const enhancedReferenceTags = [...(reference_tags || []), '@image-ref']
+
         if (!photoshoot_id || !final_prompts || !Array.isArray(final_prompts) || final_prompts.length !== 5) {
             return NextResponse.json({
                 error: 'Photoshoot ID and exactly 5 final prompts are required'
@@ -62,7 +67,8 @@ export async function POST(request: NextRequest) {
 
         console.log('Generating 5 photoshoot images for ID:', photoshoot_id)
         console.log('Prompts:', final_prompts.map((p, i) => `${i + 1}: ${p.substring(0, 50)}...`))
-        console.log('Reference images:', reference_images?.length || 0)
+        console.log('Reference images:', enhancedReferenceImages?.length || 0)
+        console.log('Reference tags:', enhancedReferenceTags)
 
         // Get photoshoot details to find product_id
         const { data: photoshoot, error: photoshootError } = await supabaseAdmin
@@ -127,12 +133,12 @@ export async function POST(request: NextRequest) {
             } else if (maxDim < 10) {
                 scaleInstructions = 'CRITICAL SCALE: This is a palm-sized product. When held, it should fit comfortably in one hand without overwhelming the palm, similar to a smartphone or small cosmetic item.'
             } else if (maxDim < 15) {
-                scaleInstructions = 'CRITICAL SCALE: This is a handheld product requiring a full grip. It should appear substantial in hands but not oversized, like a standard book or tablet.'
+                scaleInstructions = ''
             } else {
                 scaleInstructions = 'CRITICAL SCALE: This is a larger product requiring careful handling. It should appear appropriately sized for its stated dimensions.'
             }
 
-            dimensionText = ` The product ${productTag} has exact dimensions of ${dims.width}x${dims.length}x${dims.depth} ${unit}. ${scaleInstructions} Ensure ${productTag} appears proportionally accurate relative to the model's hands and body - maintain realistic size relationships and proper scale. The product must not appear too large or too small compared to human proportions. Reference the exact measurements when depicting scale.`
+            dimensionText = ` The product ${productTag} has exact dimensions of ${dims.width}x${dims.length}x${dims.depth} ${unit}. ${scaleInstructions} Reference the exact measurements when depicting scale. IMPORTANT: Use @image-ref as the reference for scale and sizing between the package and the model - this shows the correct proportional relationship that should be maintained.`
         }
 
         // Enhance all prompts with dimension information
@@ -147,8 +153,8 @@ export async function POST(request: NextRequest) {
                 status: 'generating',
                 generation_settings: {
                     final_prompts: enhancedPrompts,
-                    reference_images: reference_images || [],
-                    reference_tags: reference_tags || []
+                    reference_images: enhancedReferenceImages,
+                    reference_tags: enhancedReferenceTags
                 }
             })
             .eq('id', photoshoot_id)
@@ -172,8 +178,8 @@ export async function POST(request: NextRequest) {
                         prompt: prompt,
                         resolution: "1080p",
                         aspect_ratio: "4:3",
-                        reference_images: reference_images || [],
-                        reference_tags: reference_tags || [],
+                        reference_images: enhancedReferenceImages,
+                        reference_tags: enhancedReferenceTags,
                         seed: seed, // Use seed for more consistent results
                         guidance_scale: 7.5, // Higher guidance for better prompt adherence
                         num_inference_steps: 50 // More steps for better quality
@@ -185,13 +191,14 @@ export async function POST(request: NextRequest) {
 
                     console.log(`Replicate output ${index + 1}:`, output)
                     console.log(`Output type ${index + 1}:`, typeof output)
+                    console.log(`Output constructor ${index + 1}:`, output?.constructor?.name)
 
                     if (!output) {
                         throw new Error('No output received from Replicate')
                     }
 
                     // Handle different output types from Replicate
-                    let imageUrl: string
+                    let imageUrl: string = ''
 
                     if (typeof output === 'string') {
                         imageUrl = output
@@ -267,14 +274,23 @@ export async function POST(request: NextRequest) {
                         cloudinary_public_id: cloudinaryResult.public_id,
                         variation_index: index + 1,
                         metadata: {
-                            reference_images: reference_images || [],
-                            reference_tags: reference_tags || [],
+                            reference_images: enhancedReferenceImages,
+                            reference_tags: enhancedReferenceTags,
+                            model: 'runway-gen4',
                             replicate_output: output
                         }
                     }
                 } catch (error) {
                     console.error(`Error generating image ${index + 1}:`, error)
-                    errors.push({ index: index + 1, error: error instanceof Error ? error.message : 'Unknown error' })
+
+                    // Check if it's a content safety error and provide helpful feedback
+                    let errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+                    if (errorMessage.includes('flagged as sensitive') || errorMessage.includes('E005')) {
+                        errorMessage = 'Content flagged as sensitive by safety filters. Try adjusting the prompt to be more conservative.'
+                    }
+
+                    errors.push({ index: index + 1, error: errorMessage })
                     return null
                 }
             })
@@ -355,7 +371,7 @@ export async function POST(request: NextRequest) {
             })
 
         } catch (replicateError) {
-            console.error('Replicate generation error:', replicateError)
+            console.error('Runway ML generation error:', replicateError)
 
             // Update photoshoot status to failed
             await supabaseAdmin
@@ -364,8 +380,8 @@ export async function POST(request: NextRequest) {
                     status: 'failed',
                     generation_settings: {
                         final_prompts: enhancedPrompts,
-                        reference_images: reference_images || [],
-                        reference_tags: reference_tags || [],
+                        reference_images: enhancedReferenceImages,
+                        reference_tags: enhancedReferenceTags,
                         error: replicateError instanceof Error ? replicateError.message : 'Unknown error'
                     }
                 })
@@ -373,7 +389,7 @@ export async function POST(request: NextRequest) {
                 .eq('user_id', user.id)
 
             return NextResponse.json({
-                error: 'Failed to generate images',
+                error: 'Failed to generate images with Runway ML',
                 details: replicateError instanceof Error ? replicateError.message : 'Unknown error'
             }, { status: 500 })
         }

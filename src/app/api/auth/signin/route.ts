@@ -34,13 +34,20 @@ export async function POST(request: NextRequest) {
         )
 
         if (result.token) {
-            response.cookies.set('auth-token', result.token, {
+            // Cookie settings that work for both HTTP and HTTPS deployments
+            const isHttps = request.headers.get('x-forwarded-proto') === 'https' ||
+                request.headers.get('x-forwarded-ssl') === 'on' ||
+                request.url.startsWith('https://')
+
+            const cookieOptions = {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
+                secure: isHttps, // Only secure if actually using HTTPS
+                sameSite: 'lax' as const,
                 maxAge: 60 * 60 * 24 * 7, // 7 days
                 path: '/'
-            })
+            }
+
+            response.cookies.set('auth-token', result.token, cookieOptions)
         }
 
         return response
